@@ -136,16 +136,20 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
     tabBar: {
         backgroundColor: '#ffffff',
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
-        paddingTop: 8,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-        height: Platform.OS === 'ios' ? 88 : 64,
+        borderTopWidth: 0,
+        paddingTop: 12,
+        paddingBottom: Platform.OS === 'ios' || Platform.OS === 'android' ? 20 : 8,
+        height: Platform.OS === 'ios' || Platform.OS === 'android' ? 88 : 64,
         elevation: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        borderRadius: 40,
+        marginHorizontal: 20,
+        marginBottom: Platform.OS === 'ios' || Platform.OS === 'android' ? 20 : 8,
+        borderWidth: 1,
+        borderColor: '#E3F2FD',
     },
     tabBarLabel: {
         fontSize: 12,
@@ -153,7 +157,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     tabBarIcon: {
-        marginTop: 2,
+        marginTop: 3,
     },
     headerStyle: {
         backgroundColor: '#ffffff',

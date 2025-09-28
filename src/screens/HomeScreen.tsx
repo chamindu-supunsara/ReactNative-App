@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     },
     bottomRightPill: {
         position: 'absolute',
-        bottom: -40,
+        bottom: 12,
         right: -40,
         width: 100,
         height: 160,

@@ -29,7 +29,7 @@ export default function SplashScreen({ navigation }: any) {
                     buttonColor="#000"
                     textColor="#fff"
                 >
-                    START
+                    FIND
                 </Button>
             </View>
             
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 100,
-        fontWeight: 'thin',
+        fontWeight: 'bold',
         color: '#000000',
         marginBottom: 40,
     },
@@ -92,12 +92,13 @@ const styles = StyleSheet.create({
     },
     headline: {
         fontSize: 40,
-        fontWeight: '300',
+        fontWeight: '500',
         color: '#000000',
         fontFamily: 'System',
     },
     description: {
         fontSize: 20,
+        fontWeight: '200',
         color: '#000000',
         lineHeight: 24,
     },
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     buttonText: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '600',
     },
 });
