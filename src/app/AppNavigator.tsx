@@ -20,7 +20,7 @@ function MainTabs() {
             screenOptions={{ 
                 headerShown: false,
                 tabBarStyle: styles.tabBar,
-                tabBarActiveTintColor: '#000000',
+                tabBarActiveTintColor: '#8674b1ff',
                 tabBarInactiveTintColor: '#999999',
                 tabBarLabelStyle: styles.tabBarLabel,
                 tabBarIconStyle: styles.tabBarIcon,
@@ -34,8 +34,8 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "home" : "home-outline"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -48,8 +48,8 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "magnify" : "magnify"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -62,8 +62,8 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "shape" : "shape-outline"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -76,8 +76,8 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "star" : "star-outline"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -136,6 +136,7 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
     tabBar: {
         backgroundColor: '#ffffff',
+        position: 'absolute',
         borderTopWidth: 0,
         paddingTop: 12,
         paddingBottom: Platform.OS === 'ios' || Platform.OS === 'android' ? 20 : 8,
@@ -149,10 +150,10 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginBottom: Platform.OS === 'ios' || Platform.OS === 'android' ? 20 : 8,
         borderWidth: 1,
-        borderColor: '#E3F2FD',
+        borderColor: '#E3F2FD'
     },
     tabBarLabel: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '600',
         marginTop: 4,
     },

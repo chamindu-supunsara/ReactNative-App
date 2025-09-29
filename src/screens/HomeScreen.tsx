@@ -23,12 +23,12 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.container}>
             <View style={styles.topRightGradient} />
                     
-                <View style={styles.middleLeftPill}>
-                        
-                </View>
+                <View style={styles.middleLeftPill} />
+
+                <View style={styles.bottomRightPill} />
                     
                 <View style={styles.content}>
-                    <SafeAreaView style={{ flex: 1 }}>
+                    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
                         <ScrollView contentContainerStyle={{ padding: 16 }}>
                             <Text variant="titleLarge">Popular Events</Text>
                             {popular.map(item => (
@@ -39,6 +39,21 @@ export default function HomeScreen({ navigation }: any) {
                                 />
                             ))}
 
+                            {popular.map(item => (
+                                <EventCard key={item.id} item={item}
+                                    onPress={() => navigation.navigate('EventDetails', { item })}
+                                    onToggleFav={() => toggleFavorite(item)}
+                                    isFav={isFavorite(item.id)}
+                                />
+                            ))}
+
+                            {popular.map(item => (
+                                <EventCard key={item.id} item={item}
+                                    onPress={() => navigation.navigate('EventDetails', { item })}
+                                    onToggleFav={() => toggleFavorite(item)}
+                                    isFav={isFavorite(item.id)}
+                                />
+                            ))}
 
                             <View style={{ height: 8 }} />
                             <Text variant="titleLarge">Near Me</Text>
@@ -55,7 +70,6 @@ export default function HomeScreen({ navigation }: any) {
                     </SafeAreaView>
                 </View>
 
-            <View style={styles.bottomRightPill} />
         </View>
         
     );
