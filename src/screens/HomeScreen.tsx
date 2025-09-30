@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { ScrollView, View, StyleSheet, Image } from 'react-native';
-import { ActivityIndicator, Text, Searchbar, Chip } from 'react-native-paper';
+import { ScrollView, View, StyleSheet, Image, FlatList } from 'react-native';
+import { Text, Searchbar, Chip, Button } from 'react-native-paper';
 import { fetchTopEvents } from '../services/events';
 import { useNearbyEvents } from '../hooks/useEvents';
 import useFavorites from '../hooks/useFavorites';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const categories = ['All', 'Sports', 'Birthdays', 'Concerts', 'Food', 'Arts'];
+const categories = ['All', 'Music', 'Birthdays', 'Concerts', 'Food', 'Arts'];
 
 export default function HomeScreen({ navigation }: any) {
   const [popular, setPopular] = React.useState<any[]>([]);
@@ -55,33 +55,51 @@ export default function HomeScreen({ navigation }: any) {
           ))}
         </ScrollView>
 
-        {/* <Text variant="titleLarge" style={{ marginVertical: 12 }}>
-           Events
-        </Text> */}
-
         <View style={styles.tabRow1}>
           <Text style={styles.tabActive1}>Popular</Text>
           <Text style={styles.tabInactive1}>Events</Text>
         </View>
 
-        {featured && (
-          <View style={styles.featuredCard}>
-            
-            {featured.imageUrl && (
-              <View style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: featured.imageUrl }}
-                  style={styles.featuredImage}
-                />
-              </View>
-            )}
+        {filteredPopular.length > 0 && (
+        <FlatList
+          data={filteredPopular}
+          keyExtractor={(item) => item.id.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          snapToAlignment="center"
+          decelerationRate="fast"
+          contentContainerStyle={{ paddingHorizontal: 0 }}
+          ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
+          renderItem={({ item }) => (
+            <View style={styles.featuredCard}>
+              {item.imageUrl && (
+                <View style={styles.imageWrapper}>
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.featuredImage}
+                  />
+                </View>
+              )}
 
-            <Text style={styles.featuredTitle}>{featured.title}</Text>
-            <Text style={styles.featuredSubtitle}>
-              {featured.venue} · {new Date(featured.date).toDateString()}
-            </Text>
-          </View>
-        )}
+              <Text style={styles.featuredTitle}>{item.title}</Text>
+              <Text style={styles.featuredSubtitle}>
+                {item.venue} · {new Date(item.date).toDateString()}
+              </Text>
+              <Button
+                icon="eye"
+                mode="elevated"
+                onPress={() =>
+                  navigation.navigate('EventDetails', { event: item })
+                }
+              >
+                View
+              </Button>
+            </View>
+          )}
+        />
+)}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -125,7 +143,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6A5AE0',
     borderRadius: 60,
     padding: 10,
-    marginVertical: 25,
+    marginVertical: 20,
     alignItems: 'center',
     elevation: 5,
     justifyContent: 'flex-start',

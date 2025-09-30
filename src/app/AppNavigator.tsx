@@ -41,20 +41,20 @@ function MainTabs() {
                 }}
             />
             <Tabs.Screen
-                name="Search"
+                name="Nearby"
                 component={SearchScreen}
                 options={{
-                    tabBarLabel: 'Search',
+                    tabBarLabel: 'Nearby',
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
-                            name={focused ? "magnify" : "magnify"}
+                            name={focused ? "map" : "map-outline"}
                             size={focused ? 30 : 30}
                             color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
             />
-            <Tabs.Screen
+            {/* <Tabs.Screen
                 name="Categories"
                 component={CategoriesScreen}
                 options={{
@@ -67,7 +67,7 @@ function MainTabs() {
                         />
                     ),
                 }}
-            />
+            /> */}
             <Tabs.Screen
                 name="Favorites"
                 component={FavoritesScreen}
