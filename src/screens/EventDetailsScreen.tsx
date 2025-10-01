@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { ScrollView, View, StyleSheet, Image, Platform, Dimensions, TouchableOpacity } from 'react-native';
+import { ScrollView, View, StyleSheet, Image, Platform, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import { Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import useFavorites from '../hooks/useFavorites';
+import QRCodeScanner from '../components/QRCodeScanner';
 
 export default function EventDetailsScreen({ route }: any) {
     const { item } = route.params;
@@ -12,6 +13,26 @@ export default function EventDetailsScreen({ route }: any) {
     const isWeb = Platform.OS === 'web';
     const screenWidth = Dimensions.get('window').width;
     const isTablet = screenWidth > 768;
+    const [showQRScanner, setShowQRScanner] = React.useState(false);
+
+    const handleQRCodeScanned = (data: string) => {
+        setShowQRScanner(false);
+        // Handle the scanned QR code data
+        console.log('QR Code scanned:', data);
+        
+        // You can add logic here to process the QR code data
+        // For example, if it's a URL, you could open it
+        if (data.startsWith('http')) {
+            Linking.openURL(data);
+        } else {
+            // Show an alert with the scanned data
+            alert(`QR Code scanned: ${data}`);
+        }
+    };
+
+    const handleCloseQRScanner = () => {
+        setShowQRScanner(false);
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={[]}>
@@ -136,6 +157,30 @@ export default function EventDetailsScreen({ route }: any) {
                 </View>
 
             </ScrollView>
+            
+            {/* QR Code Button - Fixed Bottom Right */}
+            <TouchableOpacity 
+                style={styles.qrButton}
+                onPress={() => setShowQRScanner(true)}
+            >
+                <MaterialCommunityIcons 
+                    name="qrcode"
+                    size={24}
+                    color="#FFFFFF"
+                />
+            </TouchableOpacity>
+
+            {/* QR Code Scanner Modal */}
+            <Modal
+                visible={showQRScanner}
+                animationType="slide"
+                presentationStyle="fullScreen"
+            >
+                <QRCodeScanner
+                    onQRCodeScanned={handleQRCodeScanned}
+                    onClose={handleCloseQRScanner}
+                />
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -330,5 +375,24 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         borderWidth: 2,
         borderColor: '#6A5AE0',
+    },
+    
+    // QR Button
+    qrButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#6A5AE0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        zIndex: 1000,
     },
 });

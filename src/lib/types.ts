@@ -4,7 +4,7 @@ export type EventItem = {
     category: 'Music' | 'Sports' | 'Food';
     date: string;
     venue: string;
-    location: { lat: number; lng: number; city?: string };
+    location: { lat: number; lng: number; city?: string } | { latitude: number; longitude: number };
     imageUrl?: string;
     popularity?: number;
     description?: string;
