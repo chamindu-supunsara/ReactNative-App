@@ -4,17 +4,34 @@ import { EventItem } from '../lib/types';
 import { getCache, setCache } from '../lib/cache';
 import { haversineKm } from '../lib/geo';
 
-const TTL = 1000 * 60 * 60 * 6; // 6 hours
+const TTL = 1000 * 60 * 60 * 1; // 1 hour
 
-export async function fetchTopEvents(max = 20): Promise<EventItem[]> {
+export async function fetchTopEvents(max = 5): Promise<EventItem[]> {
     const cacheKey = `events_top_${max}`;
     const cached = await getCache<EventItem[]>(cacheKey);
     if (cached) return cached;
 
+    let q = query(collection(db, 'events'), orderBy('popularity', 'desc'), limit(max));
+    let snap = await getDocs(q);
+    let data: EventItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+    
+    if (data.length < max) {
+        const allEventsQuery = query(collection(db, 'events'), limit(max * 2));
+        const allSnap = await getDocs(allEventsQuery);
+        const allData: EventItem[] = allSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        
+        const sortedData = allData
+            .sort((a, b) => {
+                const aPop = a.popularity || 0;
+                const bPop = b.popularity || 0;
+                if (aPop !== bPop) return bPop - aPop;
+                return new Date(a.date).getTime() - new Date(b.date).getTime();
+            })
+            .slice(0, max);
+        
+        data = sortedData;
+    }
 
-    const q = query(collection(db, 'events'), orderBy('popularity', 'desc'), limit(max));
-    const snap = await getDocs(q);
-    const data: EventItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
     await setCache(cacheKey, data, TTL);
     return data;
 }
@@ -43,15 +60,36 @@ export async function fetchNearbyEvents(lat: number, lng: number, radiusKm = 10,
 }
 
 
+export async function fetchAllEvents(): Promise<EventItem[]> {
+    const cacheKey = 'events_all';
+    const cached = await getCache<EventItem[]>(cacheKey);
+    if (cached) return cached;
+
+    // Get all events without any limits
+    const q = query(collection(db, 'events'));
+    const snap = await getDocs(q);
+    const data: EventItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+    
+    // Sort by popularity (with fallback to 0 if not set) and then by date
+    const sortedData = data.sort((a, b) => {
+        const aPop = a.popularity || 0;
+        const bPop = b.popularity || 0;
+        if (aPop !== bPop) return bPop - aPop; // Higher popularity first
+        return new Date(a.date).getTime() - new Date(b.date).getTime(); // Then by date
+    });
+
+    await setCache(cacheKey, sortedData, TTL);
+    return sortedData;
+}
+
 export async function searchEvents(keyword: string, max = 50): Promise<EventItem[]> {
     const key = keyword.trim().toLowerCase();
     const cacheKey = `events_search_${key}_${max}`;
     const cached = await getCache<EventItem[]>(cacheKey);
     if (cached) return cached;
 
-
-    // naive search: load top N and filter — replace with indexed queries if needed
-    const list = await fetchTopEvents(200);
+    // Use fetchAllEvents to get all events for better search results
+    const list = await fetchAllEvents();
     const res = list.filter(e =>
         e.title.toLowerCase().includes(key) || e.venue.toLowerCase().includes(key)
     ).slice(0, max);

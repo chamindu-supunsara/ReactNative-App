@@ -1,23 +1,33 @@
 import * as React from 'react';
-import { ScrollView, View, StyleSheet, Image, FlatList } from 'react-native';
+import { ScrollView, View, StyleSheet, Image, FlatList, Platform, Dimensions } from 'react-native';
 import { Text, Searchbar, Chip, Button } from 'react-native-paper';
-import { fetchTopEvents } from '../services/events';
-import { useNearbyEvents } from '../hooks/useEvents';
-import useFavorites from '../hooks/useFavorites';
+import { fetchAllEvents } from '../services/events';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const categories = ['All', 'Music', 'Birthdays', 'Concerts', 'Food', 'Arts'];
+const categories = ['All', 'Music', 'Food', 'Sports'];
 
 export default function HomeScreen({ navigation }: any) {
   const [popular, setPopular] = React.useState<any[]>([]);
-  const { loading, events: nearby } = useNearbyEvents(10);
-  const { isFavorite, toggleFavorite } = useFavorites();
 
   const [search, setSearch] = React.useState('');
   const [activeCat, setActiveCat] = React.useState('All');
 
+  const isWeb = Platform.OS === 'web';
+  const screenWidth = Dimensions.get('window').width;
+  const isTablet = screenWidth > 768;
+
   React.useEffect(() => {
-    fetchTopEvents(10).then(setPopular);
+    fetchAllEvents().then(allEvents => {
+      const top5Events = allEvents
+        .sort((a, b) => {
+          const aPop = a.popularity || 0;
+          const bPop = b.popularity || 0;
+          if (aPop !== bPop) return bPop - aPop;
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        })
+        .slice(0, 5);
+      setPopular(top5Events);
+    });
   }, []);
 
   const featured = popular.length > 0 ? popular[0] : null;
@@ -66,13 +76,17 @@ export default function HomeScreen({ navigation }: any) {
           keyExtractor={(item) => item.id.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
-          pagingEnabled
+          pagingEnabled={!isWeb && !isTablet}
           snapToAlignment="center"
           decelerationRate="fast"
           contentContainerStyle={{ paddingHorizontal: 0 }}
           ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
           renderItem={({ item }) => (
-            <View style={styles.featuredCard}>
+            <View style={[
+              styles.featuredCard,
+              isWeb && styles.featuredCardWeb,
+              isTablet && styles.featuredCardTablet
+            ]}>
               {item.imageUrl && (
                 <View style={styles.imageWrapper}>
                   <Image
@@ -82,23 +96,19 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
               )}
 
-              <Text style={styles.featuredTitle}>{item.title}</Text>
-              <Text style={styles.featuredSubtitle}>
-                {item.venue} · {new Date(item.date).toDateString()}
+              <Text style={styles.featuredTitle}>
+                {item.title.length > 25 ? `${item.title.substring(0, 25)}...` : item.title}
               </Text>
-              <Button
-                icon="eye"
-                mode="elevated"
-                onPress={() =>
-                  navigation.navigate('EventDetails', { event: item })
-                }
-              >
-                View
-              </Button>
+              <Text style={styles.featuredSubtitle}>
+                {item.venue.length > 40 ? `${item.venue.substring(0, 40)}...` : item.venue}
+              </Text>
+              <Text style={styles.featuredSubtitle}>
+                {new Date(item.date).toDateString()}
+              </Text>
             </View>
           )}
         />
-)}
+      )}
 
       </ScrollView>
     </SafeAreaView>
@@ -154,7 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 6,
+    marginBottom: 10,
   },
   featuredSubtitle: {
     fontSize: 14,
@@ -176,5 +186,13 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 200,
+  },
+  featuredCardWeb: {
+    width: 300,
+    marginHorizontal: 10,
+  },
+  featuredCardTablet: {
+    width: 280,
+    marginHorizontal: 15,
   },
 });
