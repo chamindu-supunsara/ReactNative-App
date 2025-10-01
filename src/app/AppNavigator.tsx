@@ -5,8 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet } from 'react-native';
 import SplashScreen from '../screens/SplashScreen';
 import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import CategoriesScreen from '../screens/CategoriesScreen';
+import NearbyScreen from '../screens/NearbyScreen';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -42,7 +41,7 @@ function MainTabs() {
             />
             <Tabs.Screen
                 name="Nearby"
-                component={SearchScreen}
+                component={NearbyScreen}
                 options={{
                     tabBarLabel: 'Nearby',
                     tabBarIcon: ({ focused, color }) => (
@@ -54,20 +53,6 @@ function MainTabs() {
                     ),
                 }}
             />
-            {/* <Tabs.Screen
-                name="Categories"
-                component={CategoriesScreen}
-                options={{
-                    tabBarLabel: 'Categories',
-                    tabBarIcon: ({ focused, color }) => (
-                        <MaterialCommunityIcons
-                            name={focused ? "shape" : "shape-outline"}
-                            size={focused ? 30 : 30}
-                            color={focused ? '#8674b1ff' : color}
-                        />
-                    ),
-                }}
-            /> */}
             <Tabs.Screen
                 name="Favorites"
                 component={FavoritesScreen}

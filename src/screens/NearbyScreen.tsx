@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-export default function SearchScreen({ navigation }: any) {
+export default function NearbyScreen({ navigation }: any) {
     
     return (
         <SafeAreaView style={{ flex: 1 }}>
