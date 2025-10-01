@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import SplashScreen from '../screens/SplashScreen';
 import HomeScreen from '../screens/HomeScreen';
 import NearbyScreen from '../screens/NearbyScreen';
@@ -107,11 +107,23 @@ export default function AppNavigator() {
                 <Stack.Screen
                     name="EventDetails"
                     component={EventDetailsScreen}
-                    options={{ 
+                    options={({ navigation }) => ({ 
                         title: "Event Details",
                         headerStyle: styles.headerStyle,
                         headerTitleStyle: styles.headerTitleStyle,
-                    }}
+                        headerLeft: () => (
+                            <TouchableOpacity 
+                                onPress={() => navigation.goBack()} 
+                                style={styles.backButton}
+                            >
+                                <MaterialCommunityIcons 
+                                    name="arrow-left" 
+                                    size={20} 
+                                    color="#000000" 
+                                />
+                            </TouchableOpacity>
+                        ),
+                    })}
                 />
             </Stack.Navigator>
         </NavigationContainer>
@@ -162,5 +174,9 @@ const styles = StyleSheet.create({
     },
     cardStyle: {
         backgroundColor: '#ffffff',
+    },
+    backButton: {
+        padding: 8,
+        marginLeft: 8,
     },
 });

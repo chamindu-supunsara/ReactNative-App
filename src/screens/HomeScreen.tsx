@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ScrollView, View, StyleSheet, Image, FlatList, Platform, Dimensions } from 'react-native';
+import { ScrollView, View, StyleSheet, Image, FlatList, Platform, Dimensions, TouchableOpacity } from 'react-native';
 import { Text, Chip, ProgressBar, MD3Colors } from 'react-native-paper';
 import { fetchEventsByCategory } from '../services/events';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -83,11 +83,14 @@ export default function HomeScreen({ navigation }: any) {
             contentContainerStyle={styles.eventsList}
             ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
             renderItem={({ item }) => (
-              <View style={[
-                styles.eventCard,
-                isWeb && styles.eventCardWeb,
-                isTablet && styles.eventCardTablet
-              ]}>
+              <TouchableOpacity 
+                style={[
+                  styles.eventCard,
+                  isWeb && styles.eventCardWeb,
+                  isTablet && styles.eventCardTablet
+                ]}
+                onPress={() => navigation.navigate('EventDetails', { item })}
+              >
                 {item.imageUrl ? (
                   <View style={styles.imageContainer}>
                     <Image
@@ -119,7 +122,7 @@ export default function HomeScreen({ navigation }: any) {
                     })}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
           />
         ) : (
