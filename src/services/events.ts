@@ -82,6 +82,31 @@ export async function fetchAllEvents(): Promise<EventItem[]> {
     return sortedData;
 }
 
+export async function fetchEventsByCategory(category: string, max = 5): Promise<EventItem[]> {
+    if (category === 'All') {
+        return fetchTopEvents(max);
+    }
+
+    const cacheKey = `events_category_${category}_${max}`;
+    const cached = await getCache<EventItem[]>(cacheKey);
+    if (cached) return cached;
+
+    // Get all events and filter by category, then sort by popularity
+    const allEvents = await fetchAllEvents();
+    const categoryEvents = allEvents
+        .filter(event => event.category === category)
+        .sort((a, b) => {
+            const aPop = a.popularity || 0;
+            const bPop = b.popularity || 0;
+            if (aPop !== bPop) return bPop - aPop;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        })
+        .slice(0, max);
+
+    await setCache(cacheKey, categoryEvents, TTL);
+    return categoryEvents;
+}
+
 export async function searchEvents(keyword: string, max = 50): Promise<EventItem[]> {
     const key = keyword.trim().toLowerCase();
     const cacheKey = `events_search_${key}_${max}`;
