@@ -14,10 +14,11 @@ interface UserLocation {
 }
 
 export default function NearbyScreen({ navigation }: any) {
+    const mapRef = React.useRef<MapView>(null);
     const [userLocation, setUserLocation] = React.useState<UserLocation | null>(null);
     const [nearbyEvents, setNearbyEvents] = React.useState<EventItem[]>([]);
     const [loading, setLoading] = React.useState(false);
-    const [showDetails, setShowDetails] = React.useState(true);
+    const [showDetails, setShowDetails] = React.useState(false);
     const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
     const [locationError, setLocationError] = React.useState<string | null>(null);
     const [retryCount, setRetryCount] = React.useState(0);
@@ -159,19 +160,40 @@ export default function NearbyScreen({ navigation }: any) {
         
         // Center map on selected event
         const coords = getLocationCoords(event.location);
-        if (coords) {
-            setMapRegion({
+        if (coords && mapRef.current) {
+            const newRegion = {
                 latitude: coords.lat,
                 longitude: coords.lng,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
-            });
+            };
+            
+            mapRef.current.animateToRegion(newRegion, 1000);
+            setMapRegion(newRegion);
         }
     };
 
     // Handle navigation to event details
     const handleNavigateToDetails = (event: EventItem) => {
         navigation.navigate('EventDetails', { item: event });
+    };
+
+    // Handle relocate to user location
+    const handleRelocate = () => {
+        if (userLocation && mapRef.current) {
+            const newRegion = {
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                latitudeDelta: 0.1250,
+                longitudeDelta: 0.1250,
+            };
+            
+            mapRef.current.animateToRegion(newRegion, 1000);
+            setMapRegion(newRegion);
+        } else {
+            // If no user location, get it again
+            getCurrentLocation();
+        }
     };
 
     // Load nearby events on component mount
@@ -183,6 +205,7 @@ export default function NearbyScreen({ navigation }: any) {
         <SafeAreaView style={styles.container} edges={[]}>
             <View style={styles.mapContainer}>
                 <MapView
+                    ref={mapRef}
                     style={styles.map}
                     region={mapRegion}
                     showsUserLocation={true}
@@ -221,9 +244,9 @@ export default function NearbyScreen({ navigation }: any) {
                                     isSelected && styles.selectedEventMarker
                                 ]}>
                                     <MaterialCommunityIcons 
-                                        name="calendar" 
-                                        size={20} 
-                                        color={isSelected ? "#FFFFFF" : "#6A5AE0"} 
+                                        name="map-marker" 
+                                        size={28} 
+                                        color={isSelected ? "#FF0000" : "#FF4444"} 
                                     />
                                 </View>
                             </Marker>
@@ -234,7 +257,7 @@ export default function NearbyScreen({ navigation }: any) {
                 {/* Map Overlay Controls */}
                 <TouchableOpacity
                     style={[styles.relocateButton, loading && styles.disabledButton]}
-                    onPress={() => getCurrentLocation()}
+                    onPress={handleRelocate}
                     disabled={loading}
                 >
                     <MaterialCommunityIcons 
@@ -363,25 +386,10 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     eventMarker: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        padding: 8,
-        borderWidth: 2,
-        borderColor: '#6A5AE0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
+        // No circular background - just the icon
     },
     selectedEventMarker: {
-        backgroundColor: '#6A5AE0',
-        borderColor: '#FFFFFF',
-        borderWidth: 3,
-        transform: [{ scale: 1.2 }],
-        shadowOpacity: 0.5,
-        shadowRadius: 8,
-        elevation: 8,
+        transform: [{ scale: 1.3 }],
     },
     relocateButton: {
         position: 'absolute',

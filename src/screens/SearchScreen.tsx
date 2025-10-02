@@ -2,15 +2,23 @@ import * as React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { Searchbar, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import useFavorites from '../hooks/useFavorites';
 import EventCard from '../components/EventCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { searchEvents } from '../services/events';
 
 export default function SearchScreen({ navigation }: any) {
-    const { isFavorite, toggleFavorite } = useFavorites();
+    const { isFavorite, toggleFavorite, refreshFavorites } = useFavorites();
     const [q, setQ] = React.useState('');
     const [results, setResults] = React.useState([] as any[]);
+
+    // Refresh favorites when screen comes into focus
+    useFocusEffect(
+        React.useCallback(() => {
+            refreshFavorites();
+        }, [refreshFavorites])
+    );
 
     async function onSubmit() {
         const res = await searchEvents(q, 50);

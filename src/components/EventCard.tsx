@@ -77,30 +77,6 @@ export default function EventCard({ item, onPress, onToggleFav, isFav }: {
                             <Text style={styles.venueText} numberOfLines={1}>{item.venue}</Text>
                         </View>
 
-                        {/* Action Buttons */}
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity 
-                                style={styles.mapButton}
-                                onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venue)}`)}
-                            >
-                                <MaterialCommunityIcons name="map" size={16} color="#6A5AE0" />
-                                <Text style={styles.mapButtonText}>Directions</Text>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity 
-                                style={styles.saveButton}
-                                onPress={onToggleFav}
-                            >
-                                <MaterialCommunityIcons 
-                                    name={isFav ? "bookmark" : "bookmark-outline"} 
-                                    size={16} 
-                                    color={isFav ? "#FF6B6B" : "#6A5AE0"} 
-                                />
-                                <Text style={[styles.saveButtonText, { color: isFav ? "#FF6B6B" : "#6A5AE0" }]}>
-                                    {isFav ? 'Saved' : 'Save'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
                     </View>
                 </View>
             </View>
@@ -173,7 +149,7 @@ const styles = StyleSheet.create({
         width: 40,
         alignItems: 'center',
         marginRight: 12,
-        paddingTop: 2,
+        paddingTop: 20,
     },
     dateMonth: {
         fontSize: 10,
@@ -215,41 +191,5 @@ const styles = StyleSheet.create({
         marginLeft: 4,
         flex: 1,
         fontWeight: '500',
-    },
-    actionButtons: {
-        flexDirection: 'row',
-        marginTop: 8,
-        gap: 8,
-    },
-    mapButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        backgroundColor: '#F8F9FF',
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#E1E5FF',
-    },
-    mapButtonText: {
-        fontSize: 11,
-        color: '#6A5AE0',
-        fontWeight: '600',
-        marginLeft: 3,
-    },
-    saveButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        backgroundColor: '#FFF8F8',
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#FFE1E1',
-    },
-    saveButtonText: {
-        fontSize: 11,
-        fontWeight: '600',
-        marginLeft: 3,
-    },
+    }
 });

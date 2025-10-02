@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { ScrollView, View, StyleSheet, Image, FlatList, Platform, Dimensions, TouchableOpacity } from 'react-native';
+import { ScrollView, View, StyleSheet } from 'react-native';
 import { Text, Chip, ProgressBar, MD3Colors } from 'react-native-paper';
 import { fetchEventsByCategory } from '../services/events';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import EventCard from '../components/EventCard';
+import useFavorites from '../hooks/useFavorites';
 
 const categories = ['All', 'Music', 'Food', 'Sports'];
 
@@ -10,9 +12,7 @@ export default function HomeScreen({ navigation }: any) {
   const [popular, setPopular] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeCat, setActiveCat] = React.useState('All');
-  const isWeb = Platform.OS === 'web';
-  const screenWidth = Dimensions.get('window').width;
-  const isTablet = screenWidth > 768;
+  const { favorites, toggleFavorite } = useFavorites();
 
   React.useEffect(() => {
     setLoading(true);
@@ -31,13 +31,13 @@ export default function HomeScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-         <View style={styles.tabRow}>
+         {/* <View style={styles.tabRow}>
            <View style={styles.discoverContainer}>
              <Text style={styles.tabActive}>Discover</Text>
              <View style={styles.underline} />
            </View>
            <Text style={styles.tabInactive}>Events</Text>
-         </View>
+         </View> */}
 
         <View style={styles.categoriesSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
@@ -62,7 +62,8 @@ export default function HomeScreen({ navigation }: any) {
 
         <View style={styles.eventsSection}>
           <Text style={styles.sectionTitle}>
-            Popular {activeCat === 'All' ? 'Events' : activeCat + ' Events'}
+            <Text style={styles.sectionTitleBold}>Popular</Text>
+            <Text style={styles.sectionTitleNormal}> {activeCat === 'All' ? 'Events' : activeCat + ' Events'}</Text>
           </Text>
         </View>
 
@@ -72,59 +73,15 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.loadingText}>Loading {activeCat.toLowerCase()} events...</Text>
           </View>
         ) : filteredPopular.length > 0 ? (
-          <FlatList
-            data={filteredPopular}
-            keyExtractor={(item) => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled={!isWeb && !isTablet}
-            snapToAlignment="center"
-            decelerationRate="fast"
-            contentContainerStyle={styles.eventsList}
-            ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
-            renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={[
-                  styles.eventCard,
-                  isWeb && styles.eventCardWeb,
-                  isTablet && styles.eventCardTablet
-                ]}
-                onPress={() => navigation.navigate('EventDetails', { item })}
-              >
-                {item.imageUrl ? (
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.eventImage}
-                    />
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{item.category}</Text>
-                    </View>
-                  </View>
-                ) : (
-                  <View style={[styles.imageContainer, styles.placeholderImage]}>
-                    <Text style={styles.placeholderText}>No Image</Text>
-                  </View>
-                )}
-
-                <View style={styles.eventContent}>
-                  <Text style={styles.eventTitle} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.eventVenue} numberOfLines={1}>
-                    📍 {item.venue}
-                  </Text>
-                  <Text style={styles.eventDate}>
-                    📅 {new Date(item.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+          filteredPopular.map(item => (
+            <EventCard
+              key={item.id}
+              item={item}
+              onPress={() => navigation.navigate('EventDetails', { item })}
+              onToggleFav={() => toggleFavorite(item)}
+              isFav={favorites.some((fav: any) => fav.id === item.id)}
+            />
+          ))
         ) : (
           <View style={styles.noEventsContainer}>
             <Text style={styles.noEventsIcon}>📅</Text>
@@ -142,6 +99,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+    marginBottom: 30,
   },
   scrollContent: {
     padding: 15,
@@ -151,7 +109,7 @@ const styles = StyleSheet.create({
   tabRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 30,
+    marginBottom: 20,
     paddingTop: 0,
   },
   discoverContainer: {
@@ -176,13 +134,18 @@ const styles = StyleSheet.create({
   },
 
   categoriesSection: {
-    marginBottom: 30,
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 30,
-    fontWeight: 'thin',
     color: '#1A1A1A',
-    marginBottom: 16,
+    marginBottom: 10,
+  },
+  sectionTitleBold: {
+    fontWeight: 'bold',
+  },
+  sectionTitleNormal: {
+    fontWeight: 'thin',
   },
   categoriesScroll: {
     paddingLeft: 4,
@@ -193,8 +156,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E1E5E9',
     borderRadius: 50,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 1,
+    paddingVertical: 1,
   },
   chipSelected: {
     backgroundColor: '#6A5AE0',
@@ -211,89 +174,7 @@ const styles = StyleSheet.create({
 
   // Events Section
   eventsSection: {
-    marginBottom: 20,
-  },
-  eventsList: {
-    paddingHorizontal: 4,
-    paddingBottom: 20,
-  },
-
-  // Event Cards
-  eventCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    width: 280,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    overflow: 'hidden',
-  },
-  eventCardWeb: {
-    width: 320,
-    marginHorizontal: 8,
-  },
-  eventCardTablet: {
-    width: 300,
-    marginHorizontal: 12,
-  },
-
-  // Image Container
-  imageContainer: {
-    position: 'relative',
-    height: 180,
-    backgroundColor: '#F0F0F0',
-  },
-  eventImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  placeholderImage: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#E1E5E9',
-  },
-  placeholderText: {
-    color: '#999999',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  categoryBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(106, 90, 224, 0.9)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  categoryText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  eventContent: {
-    padding: 16,
-  },
-  eventTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 8,
-    lineHeight: 24,
-  },
-  eventVenue: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 6,
-  },
-  eventDate: {
-    fontSize: 14,
-    color: '#666666',
-    fontWeight: '500',
+    marginBottom: 0,
   },
 
   // Loading and Empty States
