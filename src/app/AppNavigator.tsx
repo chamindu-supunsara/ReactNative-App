@@ -8,6 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import NearbyScreen from '../screens/NearbyScreen';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import SearchScreen from '../screens/SearchScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
@@ -47,6 +48,20 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "map" : "map-outline"}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="Search"
+                component={SearchScreen}
+                options={{
+                    tabBarLabel: 'Search',
+                    tabBarIcon: ({ focused, color }) => (
+                        <MaterialCommunityIcons
+                            name={focused ? "magnify" : "magnify"}
                             size={focused ? 30 : 30}
                             color={focused ? '#8674b1ff' : color}
                         />
