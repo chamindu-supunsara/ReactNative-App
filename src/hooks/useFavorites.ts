@@ -4,11 +4,11 @@ import { EventItem } from '../lib/types';
 import { incrementEventPopularity, decrementEventPopularity } from '../services/events';
 import { useEventRefresh } from '../contexts/EventRefreshContext';
 
-const KEY = 'favorites_v2';
+const KEY = 'XJSTFDKSDJKS';
 const MAX_FAVORITES = 10;
 
 type FavoriteItem = EventItem & {
-    savedAt: string; // ISO timestamp when the event was saved
+    savedAt: string;
 };
 
 export default function useFavorites() {
@@ -20,7 +20,6 @@ export default function useFavorites() {
             const raw = await AsyncStorage.getItem(KEY);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                // Sort by savedAt timestamp, most recent first
                 const sorted = parsed.sort((a: FavoriteItem, b: FavoriteItem) => 
                     new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
                 );
@@ -43,32 +42,27 @@ export default function useFavorites() {
             const exists = prev.find(x => x.id === item.id);
             
             if (exists) {
-                // Remove from favorites
                 const next = prev.filter(x => x.id !== item.id);
                 AsyncStorage.setItem(KEY, JSON.stringify(next));
                 
-                // Decrease popularity in Firebase
                 decrementEventPopularity(item.id).then(() => {
-                    triggerRefresh(); // Trigger refresh after successful update
+                    triggerRefresh();
                 }).catch(error => {
                     console.error('Error decreasing event popularity:', error);
                 });
                 
                 return next;
             } else {
-                // Add to favorites with timestamp
                 const favoriteItem: FavoriteItem = {
                     ...item,
                     savedAt: new Date().toISOString()
                 };
                 
-                // Add to beginning and limit to MAX_FAVORITES
                 const next = [favoriteItem, ...prev].slice(0, MAX_FAVORITES);
                 AsyncStorage.setItem(KEY, JSON.stringify(next));
                 
-                // Increase popularity in Firebase
                 incrementEventPopularity(item.id).then(() => {
-                    triggerRefresh(); // Trigger refresh after successful update
+                    triggerRefresh();
                 }).catch(error => {
                     console.error('Error increasing event popularity:', error);
                 });
@@ -82,7 +76,6 @@ export default function useFavorites() {
         return favorites.some(x => x.id === id);
     }
 
-    // Return favorites as EventItem[] for compatibility
     const favoritesAsEventItems: EventItem[] = favorites.map(({ savedAt, ...event }) => event);
 
     return { 
@@ -90,6 +83,6 @@ export default function useFavorites() {
         toggleFavorite, 
         isFavorite,
         refreshFavorites: loadFavorites,
-        favoritesWithTimestamp: favorites // For internal use if needed
+        favoritesWithTimestamp: favorites
     };
 }

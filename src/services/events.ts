@@ -4,7 +4,7 @@ import { EventItem } from '../lib/types';
 import { getCache, setCache, clearMultipleCaches } from '../lib/cache';
 import { haversineKm } from '../lib/geo';
 
-const TTL = 1000 * 60 * 60 * 1; // 1 hour
+const TTL = 1000 * 60 * 60 * 1;
 
 export async function fetchTopEvents(max = 5): Promise<EventItem[]> {
     const cacheKey = `events_top_${max}`;
@@ -37,58 +37,20 @@ export async function fetchTopEvents(max = 5): Promise<EventItem[]> {
 }
 
 
-export async function fetchNearbyEvents(lat: number, lng: number, radiusKm = 10, max = 30): Promise<EventItem[]> {
-    const cacheKey = `events_near_${lat.toFixed(2)}_${lng.toFixed(2)}_${radiusKm}`;
-    const cached = await getCache<EventItem[]>(cacheKey);
-    if (cached) return cached;
-
-
-    // Simple approach: fetch a reasonable set, then filter client-side by distance.
-    const q = query(collection(db, 'events'), orderBy('date'), limit(200));
-    const snap = await getDocs(q);
-    const all: EventItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-    const nearby = all
-        .map(e => {
-            // Handle both location formats
-            let eventLat: number | undefined, eventLng: number | undefined;
-            if ('lat' in e.location) {
-                eventLat = e.location.lat;
-                eventLng = e.location.lng;
-            } else if ('latitude' in e.location) {
-                eventLat = e.location.latitude;
-                eventLng = e.location.longitude;
-            }
-            
-            const dist = (eventLat && eventLng) ? haversineKm(lat, lng, eventLat, eventLng) : Infinity;
-            return { e, dist };
-        })
-        .filter(x => isFinite(x.dist) && x.dist <= radiusKm)
-        .sort((a, b) => a.dist - b.dist)
-        .slice(0, max)
-        .map(x => x.e);
-
-
-    await setCache(cacheKey, nearby, TTL);
-    return nearby;
-}
-
-
 export async function fetchAllEvents(): Promise<EventItem[]> {
     const cacheKey = 'events_all';
     const cached = await getCache<EventItem[]>(cacheKey);
     if (cached) return cached;
 
-    // Get all events without any limits
     const q = query(collection(db, 'events'));
     const snap = await getDocs(q);
     const data: EventItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
     
-    // Sort by popularity (with fallback to 0 if not set) and then by date
     const sortedData = data.sort((a, b) => {
         const aPop = a.popularity || 0;
         const bPop = b.popularity || 0;
-        if (aPop !== bPop) return bPop - aPop; // Higher popularity first
-        return new Date(a.date).getTime() - new Date(b.date).getTime(); // Then by date
+        if (aPop !== bPop) return bPop - aPop;
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
     await setCache(cacheKey, sortedData, TTL);
@@ -104,7 +66,6 @@ export async function fetchEventsByCategory(category: string, max = 5): Promise<
     const cached = await getCache<EventItem[]>(cacheKey);
     if (cached) return cached;
 
-    // Get all events and filter by category, then sort by popularity
     const allEvents = await fetchAllEvents();
     const categoryEvents = allEvents
         .filter(event => event.category === category)
@@ -126,7 +87,6 @@ export async function searchEvents(keyword: string, max = 50): Promise<EventItem
     const cached = await getCache<EventItem[]>(cacheKey);
     if (cached) return cached;
 
-    // Use fetchAllEvents to get all events for better search results
     const list = await fetchAllEvents();
     const res = list.filter(e =>
         e.title.toLowerCase().includes(key) || e.venue.toLowerCase().includes(key)
@@ -135,7 +95,6 @@ export async function searchEvents(keyword: string, max = 50): Promise<EventItem
     return res;
 }
 
-// Popularity management functions
 export async function incrementEventPopularity(eventId: string): Promise<void> {
     try {
         const eventRef = doc(db, 'events', eventId);
@@ -143,7 +102,6 @@ export async function incrementEventPopularity(eventId: string): Promise<void> {
             popularity: increment(1)
         });
         
-        // Clear relevant caches to ensure fresh data
         await clearEventCaches();
     } catch (error) {
         console.error('Error incrementing event popularity:', error);
@@ -158,7 +116,6 @@ export async function decrementEventPopularity(eventId: string): Promise<void> {
             popularity: increment(-1)
         });
         
-        // Clear relevant caches to ensure fresh data
         await clearEventCaches();
     } catch (error) {
         console.error('Error decrementing event popularity:', error);
@@ -166,10 +123,8 @@ export async function decrementEventPopularity(eventId: string): Promise<void> {
     }
 }
 
-// Helper function to clear event-related caches
 async function clearEventCaches(): Promise<void> {
     try {
-        // Clear all event-related cache keys
         const cacheKeys = [
             'events_all',
             'events_top_5',
@@ -180,7 +135,6 @@ async function clearEventCaches(): Promise<void> {
             'events_category_Sports'
         ];
         
-        // Clear all event-related caches
         await clearMultipleCaches(cacheKeys);
         console.log('Event caches cleared successfully');
     } catch (error) {
@@ -188,7 +142,6 @@ async function clearEventCaches(): Promise<void> {
     }
 }
 
-// Real-time listeners for cross-device updates
 export function subscribeToEventUpdates(eventId: string, callback: (event: EventItem | null) => void): Unsubscribe {
     const eventRef = doc(db, 'events', eventId);
     
@@ -214,7 +167,6 @@ export function subscribeToAllEventsUpdates(callback: (events: EventItem[]) => v
             events.push({ id: doc.id, ...doc.data() } as EventItem);
         });
         
-        // Sort by popularity and date
         const sortedEvents = events.sort((a, b) => {
             const aPop = a.popularity || 0;
             const bPop = b.popularity || 0;
@@ -229,12 +181,6 @@ export function subscribeToAllEventsUpdates(callback: (events: EventItem[]) => v
     });
 }
 
-export function subscribeToTopEventsUpdates(max: number, callback: (events: EventItem[]) => void): Unsubscribe {
-    return subscribeToAllEventsUpdates((allEvents) => {
-        const topEvents = allEvents.slice(0, max);
-        callback(topEvents);
-    });
-}
 
 export function subscribeToCategoryEventsUpdates(category: string, max: number, callback: (events: EventItem[]) => void): Unsubscribe {
     return subscribeToAllEventsUpdates((allEvents) => {

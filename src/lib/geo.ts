@@ -7,7 +7,6 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-// Utility function to validate location coordinates
 export function isValidLocation(latitude: number, longitude: number): boolean {
     return (
         typeof latitude === 'number' &&
@@ -21,7 +20,6 @@ export function isValidLocation(latitude: number, longitude: number): boolean {
     );
 }
 
-// Utility function to format location error messages
 export function getLocationErrorMessage(error: any): string {
     if (error.code === 'TIMEOUT') {
         return 'Location request timed out. Please check your GPS signal and try again.';
