@@ -10,6 +10,7 @@ import EventDetailsScreen from '../screens/EventDetailsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import SearchScreen from '../screens/SearchScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { EventRefreshProvider } from '../contexts/EventRefreshContext';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -101,47 +102,49 @@ const customTheme = {
 
 export default function AppNavigator() {
     return (
-        <NavigationContainer theme={customTheme}>
-            <Stack.Navigator
-                screenOptions={{
-                    headerStyle: styles.headerStyle,
-                    headerTitleStyle: styles.headerTitleStyle,
-                    headerTintColor: '#000000'
-                }}
-            >
-                <Stack.Screen
-                    name="Splash"
-                    component={SplashScreen}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="Main"
-                    component={MainTabs}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="EventDetails"
-                    component={EventDetailsScreen}
-                    options={({ navigation }) => ({ 
-                        title: "Event Details",
+        <EventRefreshProvider>
+            <NavigationContainer theme={customTheme}>
+                <Stack.Navigator
+                    screenOptions={{
                         headerStyle: styles.headerStyle,
                         headerTitleStyle: styles.headerTitleStyle,
-                        headerLeft: () => (
-                            <TouchableOpacity 
-                                onPress={() => navigation.goBack()} 
-                                style={styles.backButton}
-                            >
-                                <MaterialCommunityIcons 
-                                    name="arrow-left" 
-                                    size={20} 
-                                    color="#000000" 
-                                />
-                            </TouchableOpacity>
-                        ),
-                    })}
-                />
-            </Stack.Navigator>
-        </NavigationContainer>
+                        headerTintColor: '#000000'
+                    }}
+                >
+                    <Stack.Screen
+                        name="Splash"
+                        component={SplashScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="Main"
+                        component={MainTabs}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="EventDetails"
+                        component={EventDetailsScreen}
+                        options={({ navigation }) => ({ 
+                            title: "Event Details",
+                            headerStyle: styles.headerStyle,
+                            headerTitleStyle: styles.headerTitleStyle,
+                            headerLeft: () => (
+                                <TouchableOpacity 
+                                    onPress={() => navigation.goBack()} 
+                                    style={styles.backButton}
+                                >
+                                    <MaterialCommunityIcons 
+                                        name="arrow-left" 
+                                        size={20} 
+                                        color="#000000" 
+                                    />
+                                </TouchableOpacity>
+                            ),
+                        })}
+                    />
+                </Stack.Navigator>
+            </NavigationContainer>
+        </EventRefreshProvider>
     );
 }
 

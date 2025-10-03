@@ -3,10 +3,11 @@ import { View, StyleSheet, Alert, TouchableOpacity, ScrollView, Text, Image, Dim
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { fetchEventsByCategory } from '../services/events';
+import { fetchEventsByCategory, subscribeToAllEventsUpdates } from '../services/events';
 import { EventItem } from '../lib/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { isValidLocation, getLocationErrorMessage } from '../lib/geo';
+import { useEventRefresh } from '../contexts/EventRefreshContext';
 
 interface UserLocation {
     latitude: number;
@@ -22,6 +23,7 @@ export default function NearbyScreen({ navigation }: any) {
     const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
     const [locationError, setLocationError] = React.useState<string | null>(null);
     const [retryCount, setRetryCount] = React.useState(0);
+    const { refreshTrigger } = useEventRefresh();
     const [mapRegion, setMapRegion] = React.useState({
         latitude: 37.78825,
         longitude: -122.4324,
@@ -108,9 +110,8 @@ export default function NearbyScreen({ navigation }: any) {
                 longitudeDelta: 0.1250,
             });
 
-            const allEvents = await fetchEventsByCategory('All', 100);
-            const nearby = filterNearbyEvents(allEvents, latitude, longitude);
-            setNearbyEvents(nearby);
+            // Real-time listener will handle updating nearby events
+            // Just set the user location and let the listener do the rest
             
             setRetryCount(0);
 
@@ -180,9 +181,24 @@ export default function NearbyScreen({ navigation }: any) {
         }
     };
 
+    // Set up real-time listener for all events
+    React.useEffect(() => {
+        const unsubscribe = subscribeToAllEventsUpdates((allEvents) => {
+            if (userLocation) {
+                const nearby = filterNearbyEvents(allEvents, userLocation.latitude, userLocation.longitude);
+                setNearbyEvents(nearby);
+            }
+        });
+
+        // Cleanup listener on unmount
+        return () => {
+            unsubscribe();
+        };
+    }, [userLocation]);
+
     React.useEffect(() => {
         getCurrentLocation();
-    }, []);
+    }, []); // Remove refreshTrigger since we're using real-time listeners
 
     return (
         <SafeAreaView style={styles.container} edges={[]}>

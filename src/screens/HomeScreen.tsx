@@ -1,30 +1,48 @@
 import * as React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { Text, Chip, ProgressBar, MD3Colors } from 'react-native-paper';
-import { fetchEventsByCategory } from '../services/events';
+import { fetchEventsByCategory, subscribeToCategoryEventsUpdates } from '../services/events';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import EventCard from '../components/EventCard';
 import BackgroundDecorations from '../components/BackgroundDecorations';
-import useFavorites from '../hooks/useFavorites';
+import { EventItem } from '../lib/types';
 
 const categories = ['All', 'Music', 'Food', 'Sports'];
 
 export default function HomeScreen({ navigation }: any) {
-  const [popular, setPopular] = React.useState<any[]>([]);
+  const [popular, setPopular] = React.useState<EventItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeCat, setActiveCat] = React.useState('All');
-  const { favorites, toggleFavorite } = useFavorites();
 
+  // Set up real-time listener for category events
   React.useEffect(() => {
     setLoading(true);
-    fetchEventsByCategory(activeCat, 5).then(events => {
+    
+    const unsubscribe = subscribeToCategoryEventsUpdates(activeCat, 5, (events) => {
       setPopular(events);
       setLoading(false);
-    }).catch(() => {
-      setPopular([]);
-      setLoading(false);
     });
-  }, [activeCat]);
+
+    // Fallback to fetch if real-time fails
+    const fallbackFetch = async () => {
+      try {
+        const events = await fetchEventsByCategory(activeCat, 5);
+        setPopular(events);
+        setLoading(false);
+      } catch (error) {
+        setPopular([]);
+        setLoading(false);
+      }
+    };
+
+    // Initial load
+    fallbackFetch();
+
+    // Cleanup listener on unmount or category change
+    return () => {
+      unsubscribe();
+    };
+  }, [activeCat]); // Remove refreshTrigger since we're using real-time listeners
 
   const filteredPopular = popular;
 
@@ -72,8 +90,6 @@ export default function HomeScreen({ navigation }: any) {
                 key={item.id}
                 item={item}
                 onPress={() => navigation.navigate('EventDetails', { item })}
-                onToggleFav={() => toggleFavorite(item)}
-                isFav={favorites.some((fav: any) => fav.id === item.id)}
               />
             ))
           ) : (

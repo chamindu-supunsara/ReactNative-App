@@ -38,17 +38,19 @@ export default function EventCard({ item, onPress, onToggleFav, isFav }: {
                         <Text style={styles.categoryText}>{item.category}</Text>
                     </View>
                     
-                    <TouchableOpacity 
-                        style={styles.heartButton}
-                        onPress={onToggleFav}
-                        activeOpacity={0.7}
-                    >
-                        <MaterialCommunityIcons 
-                            name={isFav ? "heart" : "heart-outline"}
-                            size={20}
-                            color={isFav ? "#FF6B6B" : "#FFFFFF"}
-                        />
-                    </TouchableOpacity>
+                    {onToggleFav && (
+                        <TouchableOpacity 
+                            style={styles.heartButton}
+                            onPress={onToggleFav}
+                            activeOpacity={0.7}
+                        >
+                            <MaterialCommunityIcons 
+                                name={isFav ? "heart" : "heart-outline"}
+                                size={20}
+                                color={isFav ? "#FF6B6B" : "#FFFFFF"}
+                            />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <View style={styles.contentSection}>

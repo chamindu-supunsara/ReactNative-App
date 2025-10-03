@@ -6,12 +6,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import useFavorites from '../hooks/useFavorites';
 import EventCard from '../components/EventCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { searchEvents } from '../services/events';
+import { searchEvents, subscribeToAllEventsUpdates } from '../services/events';
+import { useEventRefresh } from '../contexts/EventRefreshContext';
+import { EventItem } from '../lib/types';
 
 export default function SearchScreen({ navigation }: any) {
     const { isFavorite, toggleFavorite, refreshFavorites } = useFavorites();
+    const { refreshTrigger } = useEventRefresh();
     const [q, setQ] = React.useState('');
-    const [results, setResults] = React.useState([] as any[]);
+    const [results, setResults] = React.useState([] as EventItem[]);
+    const [allEvents, setAllEvents] = React.useState<EventItem[]>([]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -19,10 +23,35 @@ export default function SearchScreen({ navigation }: any) {
         }, [refreshFavorites])
     );
 
+    // Set up real-time listener for all events
+    React.useEffect(() => {
+        const unsubscribe = subscribeToAllEventsUpdates((events) => {
+            setAllEvents(events);
+        });
+
+        // Cleanup listener on unmount
+        return () => {
+            unsubscribe();
+        };
+    }, []);
+
     async function onSubmit() {
         const res = await searchEvents(q, 50);
         setResults(res);
     }
+
+    // Search locally when query or events change
+    React.useEffect(() => {
+        if (q && allEvents.length > 0) {
+            const key = q.trim().toLowerCase();
+            const filteredEvents = allEvents.filter(e =>
+                e.title.toLowerCase().includes(key) || e.venue.toLowerCase().includes(key)
+            ).slice(0, 50);
+            setResults(filteredEvents);
+        } else if (!q) {
+            setResults([]);
+        }
+    }, [q, allEvents]);
 
     React.useEffect(() => { if (!q) { setResults([]); }}, [q]);
 

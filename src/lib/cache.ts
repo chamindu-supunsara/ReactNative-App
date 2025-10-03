@@ -19,3 +19,19 @@ export async function getCache<T>(key: string): Promise<T | null> {
         return null;
     }
 }
+
+export async function clearCache(key: string): Promise<void> {
+    try {
+        await AsyncStorage.removeItem(key);
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+    }
+}
+
+export async function clearMultipleCaches(keys: string[]): Promise<void> {
+    try {
+        await Promise.all(keys.map(key => AsyncStorage.removeItem(key)));
+    } catch (error) {
+        console.error('Error clearing multiple caches:', error);
+    }
+}

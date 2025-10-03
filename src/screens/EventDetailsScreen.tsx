@@ -6,11 +6,16 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import useFavorites from '../hooks/useFavorites';
 import QRCodeScanner from '../components/QRCodeScanner';
 import BackgroundDecorations from '../components/BackgroundDecorations';
+import { useEventRefresh } from '../contexts/EventRefreshContext';
+import { fetchAllEvents, subscribeToEventUpdates } from '../services/events';
+import { EventItem } from '../lib/types';
 
 export default function EventDetailsScreen({ route }: any) {
-    const { item } = route.params;
+    const { item: initialItem } = route.params;
     const { isFavorite, toggleFavorite } = useFavorites();
+    const { refreshTrigger } = useEventRefresh();
     const [showQRScanner, setShowQRScanner] = React.useState(false);
+    const [currentItem, setCurrentItem] = React.useState<EventItem>(initialItem);
 
     const handleQRCodeScanned = (data: string) => {
         setShowQRScanner(false);
@@ -26,9 +31,41 @@ export default function EventDetailsScreen({ route }: any) {
         setShowQRScanner(false);
     };
 
+    // Function to refresh event data
+    const refreshEventData = React.useCallback(async () => {
+        try {
+            const allEvents = await fetchAllEvents();
+            const updatedEvent = allEvents.find(event => event.id === initialItem.id);
+            if (updatedEvent) {
+                setCurrentItem(updatedEvent);
+            }
+        } catch (error) {
+            console.error('Error refreshing event data:', error);
+        }
+    }, [initialItem.id]);
+
+    // Set up real-time listener for this specific event
+    React.useEffect(() => {
+        const unsubscribe = subscribeToEventUpdates(initialItem.id, (event) => {
+            if (event) {
+                setCurrentItem(event);
+            }
+        });
+
+        // Cleanup listener on unmount
+        return () => {
+            unsubscribe();
+        };
+    }, [initialItem.id]);
+
+    // Fallback refresh when popularity changes (for local updates)
+    React.useEffect(() => {
+        refreshEventData();
+    }, [refreshTrigger, refreshEventData]);
+
     const handleShare = async () => {
         try {
-            const eventDate = new Date(item.date);
+            const eventDate = new Date(currentItem.date);
             const formattedDate = eventDate.toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -40,18 +77,18 @@ export default function EventDetailsScreen({ route }: any) {
                 minute: '2-digit'
             });
 
-            let shareMessage = `${item.title}\n\n`;
+            let shareMessage = `${currentItem.title}\n\n`;
             shareMessage += `Date: ${formattedDate}\n`;
             shareMessage += `Time: ${formattedTime}\n`;
-            shareMessage += `Location: ${item.venue}\n`;
-            shareMessage += `Location Link: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venue)}\n`;
+            shareMessage += `Location: ${currentItem.venue}\n`;
+            shareMessage += `Location Link: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentItem.venue)}\n`;
             
-            if (item.description) {
-                shareMessage += `\nDescription:\n${item.description}`;
+            if (currentItem.description) {
+                shareMessage += `\nDescription:\n${currentItem.description}`;
             }
 
             const shareContent = {
-                title: item.title,
+                title: currentItem.title,
                 message: shareMessage,
             };
             
@@ -68,30 +105,30 @@ export default function EventDetailsScreen({ route }: any) {
                     
                     <View style={styles.combinedSection}>
                         <View style={styles.imageSection}>
-                            {item.imageUrl ? (
+                            {currentItem.imageUrl ? (
                                 <View style={styles.imageContainer}>
                                     <Image
-                                        source={{ uri: item.imageUrl }}
+                                        source={{ uri: currentItem.imageUrl }}
                                         style={styles.eventImage}
                                     />
                                     <View style={styles.categoryBadge}>
-                                        <Text style={styles.categoryText}>{item.category}</Text>
+                                        <Text style={styles.categoryText}>{currentItem.category}</Text>
                                     </View>
                                     <TouchableOpacity 
                                         style={styles.saveButtonOverlay}
-                                        onPress={() => toggleFavorite(item)}
+                                        onPress={() => toggleFavorite(currentItem)}
                                     >
                                         <MaterialCommunityIcons 
-                                            name={isFavorite(item.id) ? "heart" : "heart-outline"}
+                                            name={isFavorite(currentItem.id) ? "heart" : "heart-outline"}
                                             size={20}
-                                            color={isFavorite(item.id) ? "#FF6B6B" : "#FFFFFF"}
+                                            color={isFavorite(currentItem.id) ? "#FF6B6B" : "#FFFFFF"}
                                         />
                                     </TouchableOpacity>
                                     <View style={styles.populationBadge}>
-                                        <Text style={styles.populationText}>{item.popularity}</Text>
+                                        <Text style={styles.populationText}>{currentItem.popularity || 0}</Text>
                                     </View>
                                     <View style={styles.imageOverlay}>
-                                        <Text style={styles.eventTitle}>{item.title}</Text>
+                                        <Text style={styles.eventTitle}>{currentItem.title}</Text>
                                     </View>
                                 </View>
                             ) : (
@@ -99,19 +136,19 @@ export default function EventDetailsScreen({ route }: any) {
                                     <Text style={styles.placeholderText}>No Image</Text>
                                     <TouchableOpacity 
                                         style={styles.saveButtonOverlay}
-                                        onPress={() => toggleFavorite(item)}
+                                        onPress={() => toggleFavorite(currentItem)}
                                     >
                                         <MaterialCommunityIcons 
-                                            name={isFavorite(item.id) ? "heart" : "heart-outline"}
+                                            name={isFavorite(currentItem.id) ? "heart" : "heart-outline"}
                                             size={20}
-                                            color={isFavorite(item.id) ? "#FF6B6B" : "#FFFFFF"}
+                                            color={isFavorite(currentItem.id) ? "#FF6B6B" : "#FFFFFF"}
                                         />
                                     </TouchableOpacity>
                                     <View style={styles.populationBadge}>
-                                        <Text style={styles.populationText}>{item.popularity || '123'}</Text>
+                                        <Text style={styles.populationText}>{currentItem.popularity || 0}</Text>
                                     </View>
                                     <View style={styles.imageOverlay}>
-                                        <Text style={styles.eventTitle}>{item.title}</Text>
+                                        <Text style={styles.eventTitle}>{currentItem.title}</Text>
                                     </View>
                                 </View>
                             )}
@@ -120,10 +157,10 @@ export default function EventDetailsScreen({ route }: any) {
                         <View style={styles.detailsSection}>
                             <View style={styles.dateBadge}>
                                 <Text style={styles.dateMonth}>
-                                    {new Date(item.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
+                                    {new Date(currentItem.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
                                 </Text>
                                 <Text style={styles.dateDay}>
-                                    {new Date(item.date).getDate()}
+                                    {new Date(currentItem.date).getDate()}
                                 </Text>
                             </View>
 
@@ -131,7 +168,7 @@ export default function EventDetailsScreen({ route }: any) {
                                  <View style={styles.infoRow}>
                                      <MaterialCommunityIcons name="clock-outline" size={16} color="#666666" />
                                      <Text style={styles.infoValue}>
-                                         {new Date(item.date).toLocaleDateString('en-US', {
+                                         {new Date(currentItem.date).toLocaleDateString('en-US', {
                                              weekday: 'long',
                                              year: 'numeric',
                                              month: 'long',
@@ -143,7 +180,7 @@ export default function EventDetailsScreen({ route }: any) {
                                  <View style={styles.infoRow}>
                                      <MaterialCommunityIcons name="clock-outline" size={16} color="#666666" />
                                      <Text style={styles.infoValue}>
-                                         {new Date(item.date).toLocaleTimeString('en-US', {
+                                         {new Date(currentItem.date).toLocaleTimeString('en-US', {
                                              hour: '2-digit',
                                              minute: '2-digit'
                                          })}
@@ -152,15 +189,15 @@ export default function EventDetailsScreen({ route }: any) {
                                  
                                  <View style={styles.infoRow}>
                                      <MaterialCommunityIcons name="map-marker-outline" size={16} color="#666666" />
-                                     <Text style={styles.infoValue}>{item.venue}</Text>
+                                     <Text style={styles.infoValue}>{currentItem.venue}</Text>
                                  </View>
                              </View>
                          </View>
 
-                         {item.description && (
+                         {currentItem.description && (
                              <View style={styles.descriptionSection}>
                                  <Text style={styles.descriptionTitle}>About this event</Text>
-                                 <Text style={styles.descriptionText}>{item.description}</Text>
+                                 <Text style={styles.descriptionText}>{currentItem.description}</Text>
                              </View>
                          )}
 
@@ -168,7 +205,7 @@ export default function EventDetailsScreen({ route }: any) {
                             <Button 
                                 mode="outlined"
                                 style={styles.actionButton}
-                                onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venue)}`)}
+                                onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentItem.venue)}`)}
                                 icon="map"
                             >
                                 Directions
