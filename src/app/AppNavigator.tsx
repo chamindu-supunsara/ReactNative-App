@@ -3,7 +3,6 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
-import SplashScreen from '../screens/SplashScreen';
 import HomeScreen from '../screens/HomeScreen';
 import NearbyScreen from '../screens/NearbyScreen';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
@@ -110,12 +109,8 @@ export default function AppNavigator() {
                         headerTitleStyle: styles.headerTitleStyle,
                         headerTintColor: '#000000'
                     }}
+                    initialRouteName="Main"
                 >
-                    <Stack.Screen
-                        name="Splash"
-                        component={SplashScreen}
-                        options={{ headerShown: false }}
-                    />
                     <Stack.Screen
                         name="Main"
                         component={MainTabs}
