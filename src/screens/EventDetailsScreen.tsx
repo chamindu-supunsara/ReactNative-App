@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { ScrollView, View, StyleSheet, Image, Platform, Dimensions, TouchableOpacity, Modal } from 'react-native';
+import { ScrollView, View, StyleSheet, Image, TouchableOpacity, Modal, Share, Linking } from 'react-native';
 import { Button, Text } from 'react-native-paper';
-import { Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import useFavorites from '../hooks/useFavorites';
@@ -10,22 +9,14 @@ import QRCodeScanner from '../components/QRCodeScanner';
 export default function EventDetailsScreen({ route }: any) {
     const { item } = route.params;
     const { isFavorite, toggleFavorite } = useFavorites();
-    const isWeb = Platform.OS === 'web';
-    const screenWidth = Dimensions.get('window').width;
-    const isTablet = screenWidth > 768;
     const [showQRScanner, setShowQRScanner] = React.useState(false);
 
     const handleQRCodeScanned = (data: string) => {
         setShowQRScanner(false);
-        // Handle the scanned QR code data
-        console.log('QR Code scanned:', data);
         
-        // You can add logic here to process the QR code data
-        // For example, if it's a URL, you could open it
         if (data.startsWith('http')) {
             Linking.openURL(data);
         } else {
-            // Show an alert with the scanned data
             alert(`QR Code scanned: ${data}`);
         }
     };
@@ -34,13 +25,46 @@ export default function EventDetailsScreen({ route }: any) {
         setShowQRScanner(false);
     };
 
+    const handleShare = async () => {
+        try {
+            const eventDate = new Date(item.date);
+            const formattedDate = eventDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const formattedTime = eventDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            let shareMessage = `${item.title}\n\n`;
+            shareMessage += `Date: ${formattedDate}\n`;
+            shareMessage += `Time: ${formattedTime}\n`;
+            shareMessage += `Location: ${item.venue}\n`;
+            shareMessage += `Location Link: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venue)}\n`;
+            
+            if (item.description) {
+                shareMessage += `\nDescription:\n${item.description}`;
+            }
+
+            const shareContent = {
+                title: item.title,
+                message: shareMessage,
+            };
+            
+            await Share.share(shareContent);
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={[]}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
-                {/* Combined Image and Content Section */}
                 <View style={styles.combinedSection}>
-                    {/* Event Image */}
                     <View style={styles.imageSection}>
                         {item.imageUrl ? (
                             <View style={styles.imageContainer}>
@@ -52,16 +76,13 @@ export default function EventDetailsScreen({ route }: any) {
                                     <Text style={styles.categoryText}>{item.category}</Text>
                                 </View>
                                 <TouchableOpacity 
-                                    style={[
-                                        styles.saveButtonOverlay,
-                                        isFavorite(item.id) ? styles.iconButtonOutlined : styles.iconButtonContained
-                                    ]}
+                                    style={styles.saveButtonOverlay}
                                     onPress={() => toggleFavorite(item)}
                                 >
                                     <MaterialCommunityIcons 
                                         name={isFavorite(item.id) ? "heart" : "heart-outline"}
                                         size={20}
-                                        color={isFavorite(item.id) ? "#6A5AE0" : "#FFFFFF"}
+                                        color={isFavorite(item.id) ? "#FF6B6B" : "#FFFFFF"}
                                     />
                                 </TouchableOpacity>
                                 <View style={styles.populationBadge}>
@@ -75,16 +96,13 @@ export default function EventDetailsScreen({ route }: any) {
                             <View style={[styles.imageContainer, styles.placeholderImage]}>
                                 <Text style={styles.placeholderText}>No Image</Text>
                                 <TouchableOpacity 
-                                    style={[
-                                        styles.saveButtonOverlay,
-                                        isFavorite(item.id) ? styles.iconButtonOutlined : styles.iconButtonContained
-                                    ]}
+                                    style={styles.saveButtonOverlay}
                                     onPress={() => toggleFavorite(item)}
                                 >
                                     <MaterialCommunityIcons 
                                         name={isFavorite(item.id) ? "heart" : "heart-outline"}
                                         size={20}
-                                        color={isFavorite(item.id) ? "#6A5AE0" : "#FFFFFF"}
+                                        color={isFavorite(item.id) ? "#FF6B6B" : "#FFFFFF"}
                                     />
                                 </TouchableOpacity>
                                 <View style={styles.populationBadge}>
@@ -97,68 +115,76 @@ export default function EventDetailsScreen({ route }: any) {
                         )}
                     </View>
 
-                    {/* Event Details */}
                     <View style={styles.detailsSection}>
-                        <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>📍</Text>
-                            <Text style={styles.infoValue}>{item.venue}</Text>
-                        </View>
-                        
-                        <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>📅</Text>
-                            <Text style={styles.infoValue}>
-                                {new Date(item.date).toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
+                        <View style={styles.dateBadge}>
+                            <Text style={styles.dateMonth}>
+                                {new Date(item.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
                             </Text>
-                        </View>
-                        
-                        <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>🕒</Text>
-                            <Text style={styles.infoValue}>
-                                {new Date(item.date).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                            <Text style={styles.dateDay}>
+                                {new Date(item.date).getDate()}
                             </Text>
                         </View>
 
-                        {/* Action Buttons */}
-                        <View style={styles.actionsSection}>
-                            <Button 
-                                mode="outlined"
-                                style={styles.actionButton}
-                                onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venue)}`)}
-                                icon="map"
-                            >
-                                Directions
-                            </Button>
-                            
-                            <Button 
-                                mode="outlined"
-                                style={styles.actionButton}
-                                onPress={() => Linking.openURL(`sms:&body=${encodeURIComponent('Join me at ' + item.title + ' on ' + new Date(item.date).toLocaleDateString())}`)}
-                                icon="share"
-                            >
-                                Share
-                            </Button>
-                        </View>
+                         <View style={styles.eventInfo}>
+                             <View style={styles.infoRow}>
+                                 <MaterialCommunityIcons name="clock-outline" size={16} color="#666666" />
+                                 <Text style={styles.infoValue}>
+                                     {new Date(item.date).toLocaleDateString('en-US', {
+                                         weekday: 'long',
+                                         year: 'numeric',
+                                         month: 'long',
+                                         day: 'numeric'
+                                     })}
+                                 </Text>
+                             </View>
+                             
+                             <View style={styles.infoRow}>
+                                 <MaterialCommunityIcons name="clock-outline" size={16} color="#666666" />
+                                 <Text style={styles.infoValue}>
+                                     {new Date(item.date).toLocaleTimeString('en-US', {
+                                         hour: '2-digit',
+                                         minute: '2-digit'
+                                     })}
+                                 </Text>
+                             </View>
+                             
+                             <View style={styles.infoRow}>
+                                 <MaterialCommunityIcons name="map-marker-outline" size={16} color="#666666" />
+                                 <Text style={styles.infoValue}>{item.venue}</Text>
+                             </View>
+                         </View>
+                     </View>
 
-                        {item.description && (
-                            <View style={styles.descriptionSection}>
-                                <Text style={styles.descriptionTitle}>About this event</Text>
-                                <Text style={styles.descriptionText}>{item.description}</Text>
-                            </View>
-                        )}
+                     {item.description && (
+                         <View style={styles.descriptionSection}>
+                             <Text style={styles.descriptionTitle}>About this event</Text>
+                             <Text style={styles.descriptionText}>{item.description}</Text>
+                         </View>
+                     )}
+
+                    <View style={styles.actionsSection}>
+                        <Button 
+                            mode="outlined"
+                            style={styles.actionButton}
+                            onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venue)}`)}
+                            icon="map"
+                        >
+                            Directions
+                        </Button>
+                        
+                        <Button 
+                            mode="outlined"
+                            style={styles.actionButton}
+                            onPress={handleShare}
+                            icon="share"
+                        >
+                            Share
+                        </Button>
                     </View>
                 </View>
 
             </ScrollView>
             
-            {/* QR Code Button - Fixed Bottom Right */}
             <TouchableOpacity 
                 style={styles.qrButton}
                 onPress={() => setShowQRScanner(true)}
@@ -170,7 +196,6 @@ export default function EventDetailsScreen({ route }: any) {
                 />
             </TouchableOpacity>
 
-            {/* QR Code Scanner Modal */}
             <Modal
                 visible={showQRScanner}
                 animationType="slide"
@@ -181,6 +206,7 @@ export default function EventDetailsScreen({ route }: any) {
                     onClose={handleCloseQRScanner}
                 />
             </Modal>
+
         </SafeAreaView>
     );
 }
@@ -196,27 +222,27 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     
-    // Combined Section
     combinedSection: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 40,
+        borderRadius: 12,
         marginBottom: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
         overflow: 'hidden',
     },
     
-    // Image Section
     imageSection: {
+        position: 'relative',
+        height: 280,
         marginBottom: 0,
     },
     imageContainer: {
         position: 'relative',
         height: 280,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: '#F5F5F5',
         borderRadius: 0,
         overflow: 'hidden',
     },
@@ -228,7 +254,7 @@ const styles = StyleSheet.create({
     placeholderImage: {
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#E1E5E9',
+        backgroundColor: '#F5F5F5',
     },
     placeholderText: {
         color: '#999999',
@@ -237,46 +263,42 @@ const styles = StyleSheet.create({
     },
     categoryBadge: {
         position: 'absolute',
-        top: 16,
-        right: 16,
+        top: 12,
+        right: 12,
         backgroundColor: 'rgba(106, 90, 224, 0.9)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
     categoryText: {
         color: '#FFFFFF',
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '600',
     },
     populationBadge: {
         position: 'absolute',
-        top: 16,
-        right: 100,
+        top: 12,
+        right: 80,
         backgroundColor: 'rgba(106, 90, 224, 0.9)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
     populationText: {
         color: '#FFFFFF',
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '600',
     },
     saveButtonOverlay: {
         position: 'absolute',
-        top: 16,
-        left: 16,
-        width: 38,
-        height: 38,
-        borderRadius: 24,
+        top: 12,
+        left: 12,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
     },
     imageOverlay: {
         position: 'absolute',
@@ -298,11 +320,12 @@ const styles = StyleSheet.create({
         textShadowRadius: 2,
     },
 
-    // Details Section
     detailsSection: {
+        flexDirection: 'row',
+        padding: 12,
+        alignItems: 'flex-start',
         backgroundColor: 'transparent',
         borderRadius: 0,
-        padding: 20,
         marginBottom: 0,
         shadowColor: 'transparent',
         shadowOffset: { width: 0, height: 0 },
@@ -310,10 +333,35 @@ const styles = StyleSheet.create({
         shadowRadius: 0,
         elevation: 0,
     },
+    
+    dateBadge: {
+        width: 40,
+        alignItems: 'center',
+        marginRight: 12,
+        paddingTop: 20,
+    },
+    dateMonth: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: '#6A5AE0',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    dateDay: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1A1A1A',
+        lineHeight: 20,
+    },
+    
+    eventInfo: {
+        flex: 1,
+    },
+    
     infoRow: {
         flexDirection: 'row',
-        marginBottom: 16,
-        alignItems: 'flex-start',
+        alignItems: 'center',
+        marginBottom: 4,
     },
     infoLabel: {
         fontSize: 20,
@@ -323,37 +371,40 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     infoValue: {
-        fontSize: 16,
-        color: '#1A1A1A',
+        fontSize: 12,
+        color: '#666666',
+        marginLeft: 4,
         flex: 1,
         fontWeight: '500',
     },
-    descriptionSection: {
-        marginTop: 20,
-        paddingTop: 20,
-        paddingBottom: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#E1E5E9',
-    },
+     descriptionSection: {
+         padding: 12,
+         paddingTop: 16,
+         paddingBottom: 0,
+         backgroundColor: 'transparent',
+         borderTopWidth: 1,
+         borderTopColor: '#E1E5E9',
+     },
     descriptionTitle: {
-        fontSize: 20,
+        fontSize: 16,
         fontWeight: 'bold',
         color: '#1A1A1A',
-        marginBottom: 12,
+        marginBottom: 10,
     },
     descriptionText: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#666666',
-        lineHeight: 24,
+        lineHeight: 20,
+        marginBottom: 15,
     },
 
-    // Actions Section
     actionsSection: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 8,
-        marginTop: 10,
-        marginBottom: 10,
+        padding: 12,
+        paddingTop: 0,
+        backgroundColor: 'transparent',
     },
     actionButton: {
         flex: 1,
@@ -367,17 +418,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flex: 0,
     },
-    iconButtonContained: {
-        backgroundColor: '#6A5AE0',
-        borderWidth: 0,
-    },
-    iconButtonOutlined: {
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        borderColor: '#6A5AE0',
-    },
     
-    // QR Button
     qrButton: {
         position: 'absolute',
         bottom: 20,
@@ -395,4 +436,5 @@ const styles = StyleSheet.create({
         elevation: 8,
         zIndex: 1000,
     },
+
 });
