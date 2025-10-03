@@ -1,106 +1,220 @@
 import * as React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
-import { ActivityIndicator, Text } from 'react-native-paper';
-import { fetchTopEvents } from '../services/events';
-import { useNearbyEvents } from '../hooks/useEvents';
-import EventCard from '../components/EventCard';
-import useFavorites from '../hooks/useFavorites';
+import { Text, Chip, ProgressBar, MD3Colors } from 'react-native-paper';
+import { fetchEventsByCategory, subscribeToCategoryEventsUpdates } from '../services/events';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import EventCard from '../components/EventCard';
+import BackgroundDecorations from '../components/BackgroundDecorations';
+import { EventItem } from '../lib/types';
 
+const categories = ['All', 'Music', 'Food', 'Sports'];
 
 export default function HomeScreen({ navigation }: any) {
-    const [popular, setPopular] = React.useState<any[]>([]);
-    const { loading, events: nearby } = useNearbyEvents(10);
-    const { isFavorite, toggleFavorite } = useFavorites();
+  const [popular, setPopular] = React.useState<EventItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [activeCat, setActiveCat] = React.useState('All');
 
+  // Set up real-time listener for category events
+  React.useEffect(() => {
+    setLoading(true);
+    
+    const unsubscribe = subscribeToCategoryEventsUpdates(activeCat, 5, (events) => {
+      setPopular(events);
+      setLoading(false);
+    });
 
-    React.useEffect(() => {
-        fetchTopEvents(10).then(setPopular);
-    }, []);
+    // Fallback to fetch if real-time fails
+    const fallbackFetch = async () => {
+      try {
+        const events = await fetchEventsByCategory(activeCat, 5);
+        setPopular(events);
+        setLoading(false);
+      } catch (error) {
+        setPopular([]);
+        setLoading(false);
+      }
+    };
 
+    // Initial load
+    fallbackFetch();
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.topRightGradient} />
-                    
-                <View style={styles.middleLeftPill}>
-                        
-                </View>
-                    
-                <View style={styles.content}>
-                    <SafeAreaView style={{ flex: 1 }}>
-                        <ScrollView contentContainerStyle={{ padding: 16 }}>
-                            <Text variant="titleLarge">Popular Events</Text>
-                            {popular.map(item => (
-                                <EventCard key={item.id} item={item}
-                                    onPress={() => navigation.navigate('EventDetails', { item })}
-                                    onToggleFav={() => toggleFavorite(item)}
-                                    isFav={isFavorite(item.id)}
-                                />
-                            ))}
+    // Cleanup listener on unmount or category change
+    return () => {
+      unsubscribe();
+    };
+  }, [activeCat]); // Remove refreshTrigger since we're using real-time listeners
 
+  const filteredPopular = popular;
 
-                            <View style={{ height: 8 }} />
-                            <Text variant="titleLarge">Near Me</Text>
-                            {loading ? <ActivityIndicator style={{ marginTop: 16 }} /> : (
-                                nearby.map(item => (
-                                    <EventCard key={item.id} item={item}
-                                        onPress={() => navigation.navigate('EventDetails', { item })}
-                                        onToggleFav={() => toggleFavorite(item)}
-                                        isFav={isFavorite(item.id)}
-                                    />
-                                ))
-                            )}
-                        </ScrollView>
-                    </SafeAreaView>
-                </View>
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <BackgroundDecorations>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.categoriesSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+              {categories.map((cat) => (
+                <Chip
+                  key={cat}
+                  onPress={() => setActiveCat(cat)}
+                  style={[
+                    styles.chip,
+                    activeCat === cat && styles.chipSelected
+                  ]}
+                  textStyle={[
+                    styles.chipText,
+                    activeCat === cat && styles.chipTextSelected
+                  ]}
+                >
+                  {cat}
+                </Chip>
+              ))}
+            </ScrollView>
+          </View>
 
-            <View style={styles.bottomRightPill} />
-        </View>
-        
-    );
+          <View style={styles.eventsSection}>
+            <Text style={styles.sectionTitle}>
+              <Text style={styles.sectionTitleBold}>Popular</Text>
+              <Text style={styles.sectionTitleNormal}> {activeCat === 'All' ? 'Events' : activeCat + ' Events'}</Text>
+            </Text>
+          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ProgressBar progress={0.5} color={MD3Colors.primary70} />
+              <Text style={styles.loadingText}>Loading {activeCat.toLowerCase()} events...</Text>
+            </View>
+          ) : filteredPopular.length > 0 ? (
+            filteredPopular.map(item => (
+              <EventCard
+                key={item.id}
+                item={item}
+                onPress={() => navigation.navigate('EventDetails', { item })}
+              />
+            ))
+          ) : (
+            <View style={styles.noEventsContainer}>
+              <Text style={styles.noEventsIcon}>📅</Text>
+              <Text style={styles.noEventsText}>No {activeCat.toLowerCase()} events found</Text>
+              <Text style={styles.noEventsSubtext}>Check back later for new events!</Text>
+            </View>
+          )}
+
+        </ScrollView>
+      </BackgroundDecorations>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#ffffff',
-        position: 'relative',
-    },
-    topRightGradient: {
-        position: 'absolute',
-        top: -50,
-        right: -50,
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-        backgroundColor: '#E3F2FD',
-    },
-    middleLeftPill: {
-        position: 'absolute',
-        left: -30,
-        top: '25%',
-        width: 140,
-        height: 240,
-        borderRadius: 70,
-        backgroundColor: '#E8F5E8',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 15,
-    },
-    bottomRightPill: {
-        position: 'absolute',
-        bottom: 12,
-        right: -40,
-        width: 100,
-        height: 160,
-        borderRadius: 50,
-        backgroundColor: '#E3F2FD',
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 2,
-        paddingTop: 2,
-        justifyContent: 'space-between',
-    }
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 15,
+    paddingBottom: 120,
+  },
+
+  tabRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
+    paddingTop: 0,
+  },
+  discoverContainer: {
+    position: 'relative',
+  },
+  tabActive: {
+    fontWeight: 'bold',
+    fontSize: 40,
+  },
+  underline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: '50%',
+    height: 3,
+    backgroundColor: '#6A5AE0',
+    borderRadius: 2,
+  },
+  tabInactive: {
+    fontSize: 40,
+    fontWeight: 'thin',
+  },
+
+  categoriesSection: {
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 30,
+    color: '#1A1A1A',
+    marginBottom: 10,
+  },
+  sectionTitleBold: {
+    fontWeight: 'bold',
+  },
+  sectionTitleNormal: {
+    fontWeight: 'thin',
+  },
+  categoriesScroll: {
+    paddingLeft: 4,
+  },
+  chip: {
+    marginRight: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E1E5E9',
+    borderRadius: 50,
+    paddingHorizontal: 1,
+    paddingVertical: 1,
+  },
+  chipSelected: {
+    backgroundColor: '#6A5AE0',
+    borderColor: '#6A5AE0',
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  chipTextSelected: {
+    color: '#FFFFFF',
+  },
+
+  // Events Section
+  eventsSection: {
+    marginBottom: 0,
+  },
+
+  // Loading and Empty States
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 60,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  noEventsContainer: {
+    alignItems: 'center',
+    padding: 60,
+  },
+  noEventsIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  noEventsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noEventsSubtext: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
 });

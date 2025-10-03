@@ -2,14 +2,14 @@ import * as React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet } from 'react-native';
-import SplashScreen from '../screens/SplashScreen';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import CategoriesScreen from '../screens/CategoriesScreen';
+import NearbyScreen from '../screens/NearbyScreen';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import SearchScreen from '../screens/SearchScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { EventRefreshProvider } from '../contexts/EventRefreshContext';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -20,7 +20,7 @@ function MainTabs() {
             screenOptions={{ 
                 headerShown: false,
                 tabBarStyle: styles.tabBar,
-                tabBarActiveTintColor: '#000000',
+                tabBarActiveTintColor: '#8674b1ff',
                 tabBarInactiveTintColor: '#999999',
                 tabBarLabelStyle: styles.tabBarLabel,
                 tabBarIconStyle: styles.tabBarIcon,
@@ -34,8 +34,22 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "home" : "home-outline"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="Nearby"
+                component={NearbyScreen}
+                options={{
+                    tabBarLabel: 'Nearby',
+                    tabBarIcon: ({ focused, color }) => (
+                        <MaterialCommunityIcons
+                            name={focused ? "map" : "map-outline"}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -48,22 +62,8 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "magnify" : "magnify"}
-                            size={24}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="Categories"
-                component={CategoriesScreen}
-                options={{
-                    tabBarLabel: 'Categories',
-                    tabBarIcon: ({ focused, color }) => (
-                        <MaterialCommunityIcons
-                            name={focused ? "shape" : "shape-outline"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -76,8 +76,8 @@ function MainTabs() {
                     tabBarIcon: ({ focused, color }) => (
                         <MaterialCommunityIcons
                             name={focused ? "star" : "star-outline"}
-                            size={24}
-                            color={color}
+                            size={focused ? 30 : 30}
+                            color={focused ? '#8674b1ff' : color}
                         />
                     ),
                 }}
@@ -101,41 +101,52 @@ const customTheme = {
 
 export default function AppNavigator() {
     return (
-        <NavigationContainer theme={customTheme}>
-            <Stack.Navigator
-                screenOptions={{
-                    headerStyle: styles.headerStyle,
-                    headerTitleStyle: styles.headerTitleStyle,
-                    headerTintColor: '#000000'
-                }}
-            >
-                <Stack.Screen
-                    name="Splash"
-                    component={SplashScreen}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="Main"
-                    component={MainTabs}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="EventDetails"
-                    component={EventDetailsScreen}
-                    options={{ 
-                        title: "Event Details",
+        <EventRefreshProvider>
+            <NavigationContainer theme={customTheme}>
+                <Stack.Navigator
+                    screenOptions={{
                         headerStyle: styles.headerStyle,
                         headerTitleStyle: styles.headerTitleStyle,
+                        headerTintColor: '#000000'
                     }}
-                />
-            </Stack.Navigator>
-        </NavigationContainer>
+                    initialRouteName="Main"
+                >
+                    <Stack.Screen
+                        name="Main"
+                        component={MainTabs}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="EventDetails"
+                        component={EventDetailsScreen}
+                        options={({ navigation }) => ({ 
+                            title: "Event Details",
+                            headerStyle: styles.headerStyle,
+                            headerTitleStyle: styles.headerTitleStyle,
+                            headerLeft: () => (
+                                <TouchableOpacity 
+                                    onPress={() => navigation.goBack()} 
+                                    style={styles.backButton}
+                                >
+                                    <MaterialCommunityIcons 
+                                        name="arrow-left" 
+                                        size={20} 
+                                        color="#000000" 
+                                    />
+                                </TouchableOpacity>
+                            ),
+                        })}
+                    />
+                </Stack.Navigator>
+            </NavigationContainer>
+        </EventRefreshProvider>
     );
 }
 
 const styles = StyleSheet.create({
     tabBar: {
         backgroundColor: '#ffffff',
+        position: 'absolute',
         borderTopWidth: 0,
         paddingTop: 12,
         paddingBottom: Platform.OS === 'ios' || Platform.OS === 'android' ? 20 : 8,
@@ -149,10 +160,10 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginBottom: Platform.OS === 'ios' || Platform.OS === 'android' ? 20 : 8,
         borderWidth: 1,
-        borderColor: '#E3F2FD',
+        borderColor: '#E3F2FD'
     },
     tabBarLabel: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '600',
         marginTop: 4,
     },
@@ -176,5 +187,9 @@ const styles = StyleSheet.create({
     },
     cardStyle: {
         backgroundColor: '#ffffff',
+    },
+    backButton: {
+        padding: 8,
+        marginLeft: 8,
     },
 });
