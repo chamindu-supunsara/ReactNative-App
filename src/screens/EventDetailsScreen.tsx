@@ -31,7 +31,6 @@ export default function EventDetailsScreen({ route }: any) {
         setShowQRScanner(false);
     };
 
-    // Function to refresh event data
     const refreshEventData = React.useCallback(async () => {
         try {
             const allEvents = await fetchAllEvents();
@@ -44,7 +43,6 @@ export default function EventDetailsScreen({ route }: any) {
         }
     }, [initialItem.id]);
 
-    // Set up real-time listener for this specific event
     React.useEffect(() => {
         const unsubscribe = subscribeToEventUpdates(initialItem.id, (event) => {
             if (event) {
@@ -52,13 +50,11 @@ export default function EventDetailsScreen({ route }: any) {
             }
         });
 
-        // Cleanup listener on unmount
         return () => {
             unsubscribe();
         };
     }, [initialItem.id]);
 
-    // Fallback refresh when popularity changes (for local updates)
     React.useEffect(() => {
         refreshEventData();
     }, [refreshTrigger, refreshEventData]);
@@ -77,11 +73,20 @@ export default function EventDetailsScreen({ route }: any) {
                 minute: '2-digit'
             });
 
+            let lat: number, lng: number;
+            if ('lat' in currentItem.location) {
+                lat = currentItem.location.lat;
+                lng = currentItem.location.lng;
+            } else {
+                lat = currentItem.location.latitude;
+                lng = currentItem.location.longitude;
+            }
+
             let shareMessage = `${currentItem.title}\n\n`;
             shareMessage += `Date: ${formattedDate}\n`;
             shareMessage += `Time: ${formattedTime}\n`;
             shareMessage += `Location: ${currentItem.venue}\n`;
-            shareMessage += `Location Link: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentItem.venue)}\n`;
+            shareMessage += `Location Link: https://www.google.com/maps/search/?api=1&query=${lat},${lng}\n`;
             
             if (currentItem.description) {
                 shareMessage += `\nDescription:\n${currentItem.description}`;
@@ -205,7 +210,17 @@ export default function EventDetailsScreen({ route }: any) {
                             <Button 
                                 mode="outlined"
                                 style={styles.actionButton}
-                                onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentItem.venue)}`)}
+                                onPress={() => {
+                                    let lat: number, lng: number;
+                                    if ('lat' in currentItem.location) {
+                                        lat = currentItem.location.lat;
+                                        lng = currentItem.location.lng;
+                                    } else {
+                                        lat = currentItem.location.latitude;
+                                        lng = currentItem.location.longitude;
+                                    }
+                                    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+                                }}
                                 icon="map"
                             >
                                 Directions
