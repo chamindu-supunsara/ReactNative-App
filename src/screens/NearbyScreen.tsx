@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, StyleSheet, Alert, Platform, TouchableOpacity, ScrollView, Text, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, Alert, TouchableOpacity, ScrollView, Text, Image, Dimensions } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -29,9 +29,8 @@ export default function NearbyScreen({ navigation }: any) {
         longitudeDelta: 0.1250,
     });
 
-    // Calculate distance between two points in kilometers
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-        const R = 6371; // Radius of the Earth in kilometers
+        const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -41,7 +40,6 @@ export default function NearbyScreen({ navigation }: any) {
         return R * c;
     };
 
-    // Helper function to get latitude and longitude from location object
     const getLocationCoords = (location: any) => {
         if (location.lat !== undefined && location.lng !== undefined) {
             return { lat: location.lat, lng: location.lng };
@@ -51,24 +49,21 @@ export default function NearbyScreen({ navigation }: any) {
         return null;
     };
 
-    // Filter events within 100KM radius
     const filterNearbyEvents = (events: EventItem[], userLat: number, userLng: number): EventItem[] => {
         return events.filter(event => {
             const coords = getLocationCoords(event.location);
             if (!coords) return false;
             
             const distance = calculateDistance(userLat, userLng, coords.lat, coords.lng);
-            return distance <= 10; // 100KM radius
+            return distance <= 10;
         });
     };
 
-    // Get user's current location
     const getCurrentLocation = async (isRetry: boolean = false) => {
         setLoading(true);
         setLocationError(null);
         
         try {
-            // Check if location services are enabled
             const isLocationEnabled = await Location.hasServicesEnabledAsync();
             if (!isLocationEnabled) {
                 const errorMsg = 'Location services are disabled. Please enable them in device settings.';
@@ -82,7 +77,6 @@ export default function NearbyScreen({ navigation }: any) {
                 return;
             }
 
-            // Request permissions
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 const errorMsg = 'Location permission denied. Please grant permission in settings.';
@@ -96,14 +90,12 @@ export default function NearbyScreen({ navigation }: any) {
                 return;
             }
 
-            // Get current location with better options
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Balanced,
             });
             
             const { latitude, longitude } = location.coords;
             
-            // Validate coordinates
             if (!isValidLocation(latitude, longitude)) {
                 throw new Error('Invalid location coordinates received');
             }
@@ -116,12 +108,10 @@ export default function NearbyScreen({ navigation }: any) {
                 longitudeDelta: 0.1250,
             });
 
-            // Fetch all events and filter nearby ones
             const allEvents = await fetchEventsByCategory('All', 100);
             const nearby = filterNearbyEvents(allEvents, latitude, longitude);
             setNearbyEvents(nearby);
             
-            // Reset retry count on success
             setRetryCount(0);
 
         } catch (error: any) {
@@ -130,12 +120,11 @@ export default function NearbyScreen({ navigation }: any) {
             const errorMessage = getLocationErrorMessage(error);
             setLocationError(errorMessage);
             
-            // Auto-retry logic (max 3 attempts)
             if (!isRetry && retryCount < 2) {
                 setRetryCount(prev => prev + 1);
                 setTimeout(() => {
                     getCurrentLocation(true);
-                }, 2000); // Wait 2 seconds before retry
+                }, 2000);
             } else {
                 Alert.alert(
                     'Location Error',
@@ -154,11 +143,9 @@ export default function NearbyScreen({ navigation }: any) {
         }
     };
 
-    // Handle event selection
     const handleEventSelect = (event: EventItem) => {
         setSelectedEventId(event.id);
         
-        // Center map on selected event
         const coords = getLocationCoords(event.location);
         if (coords && mapRef.current) {
             const newRegion = {
@@ -173,12 +160,10 @@ export default function NearbyScreen({ navigation }: any) {
         }
     };
 
-    // Handle navigation to event details
     const handleNavigateToDetails = (event: EventItem) => {
         navigation.navigate('EventDetails', { item: event });
     };
 
-    // Handle relocate to user location
     const handleRelocate = () => {
         if (userLocation && mapRef.current) {
             const newRegion = {
@@ -191,12 +176,10 @@ export default function NearbyScreen({ navigation }: any) {
             mapRef.current.animateToRegion(newRegion, 1000);
             setMapRegion(newRegion);
         } else {
-            // If no user location, get it again
             getCurrentLocation();
         }
     };
 
-    // Load nearby events on component mount
     React.useEffect(() => {
         getCurrentLocation();
     }, []);
@@ -214,14 +197,7 @@ export default function NearbyScreen({ navigation }: any) {
                     showsScale={false}
                     mapPadding={{ top: 0, right: 0, bottom: 0, left: 0 }}
                 >
-                    {/* User location marker */}
-                    {userLocation && (
-                        <Marker
-                            coordinate={userLocation}
-                        />
-                    )}
 
-                    {/* Event markers */}
                     {nearbyEvents.map((event) => {
                         const coords = getLocationCoords(event.location);
                         if (!coords) return null;
@@ -254,7 +230,6 @@ export default function NearbyScreen({ navigation }: any) {
                     })}
                 </MapView>
 
-                {/* Map Overlay Controls */}
                 <TouchableOpacity
                     style={[styles.relocateButton, loading && styles.disabledButton]}
                     onPress={handleRelocate}
@@ -267,7 +242,6 @@ export default function NearbyScreen({ navigation }: any) {
                     />
                 </TouchableOpacity>
 
-                {/* Location Error Banner */}
                 {locationError && (
                     <View style={styles.errorBanner}>
                         <MaterialCommunityIcons name="alert-circle" size={20} color="#FF6B6B" />
@@ -295,7 +269,6 @@ export default function NearbyScreen({ navigation }: any) {
                     />
                 </TouchableOpacity>
 
-                {/* Event Details Overlay on Map */}
                 {showDetails && (
                     <View style={styles.mapOverlay}>
                         <ScrollView 
@@ -386,7 +359,6 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     eventMarker: {
-        // No circular background - just the icon
     },
     selectedEventMarker: {
         transform: [{ scale: 1.3 }],

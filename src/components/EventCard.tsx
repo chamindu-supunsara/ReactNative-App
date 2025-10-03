@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Dimensions, Linking } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { EventItem } from '../lib/types';
 
-const { width } = Dimensions.get('window');
 
 export default function EventCard({ item, onPress, onToggleFav, isFav }: {
     item: EventItem; onPress?: () => void; onToggleFav?: () => void; isFav?: boolean;
@@ -26,7 +25,6 @@ export default function EventCard({ item, onPress, onToggleFav, isFav }: {
     return (
         <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.8}>
             <View style={styles.card}>
-                {/* Image Section */}
                 <View style={styles.imageSection}>
                     {item.imageUrl ? (
                         <Image source={{ uri: item.imageUrl }} style={styles.eventImage} />
@@ -36,12 +34,10 @@ export default function EventCard({ item, onPress, onToggleFav, isFav }: {
                         </View>
                     )}
                     
-                    {/* Category Badge */}
                     <View style={styles.categoryBadge}>
                         <Text style={styles.categoryText}>{item.category}</Text>
                     </View>
                     
-                    {/* Heart Icon */}
                     <TouchableOpacity 
                         style={styles.heartButton}
                         onPress={onToggleFav}
@@ -55,15 +51,12 @@ export default function EventCard({ item, onPress, onToggleFav, isFav }: {
                     </TouchableOpacity>
                 </View>
 
-                {/* Content Section */}
                 <View style={styles.contentSection}>
-                    {/* Date Badge */}
                     <View style={styles.dateBadge}>
                         <Text style={styles.dateMonth}>{month}</Text>
                         <Text style={styles.dateDay}>{day}</Text>
                     </View>
 
-                    {/* Event Info */}
                     <View style={styles.eventInfo}>
                         <Text style={styles.eventTitle} numberOfLines={2}>{item.title}</Text>
                         

@@ -31,14 +31,6 @@ export default function HomeScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-         {/* <View style={styles.tabRow}>
-           <View style={styles.discoverContainer}>
-             <Text style={styles.tabActive}>Discover</Text>
-             <View style={styles.underline} />
-           </View>
-           <Text style={styles.tabInactive}>Events</Text>
-         </View> */}
-
         <View style={styles.categoriesSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
             {categories.map((cat) => (
@@ -99,11 +91,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-    marginBottom: 30,
   },
   scrollContent: {
     padding: 15,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
 
   tabRow: {

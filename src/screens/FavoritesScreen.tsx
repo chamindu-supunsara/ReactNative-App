@@ -10,7 +10,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function FavoritesScreen({ navigation }: any) {
     const { favorites, toggleFavorite, refreshFavorites } = useFavorites();
 
-    // Refresh favorites when screen comes into focus
     useFocusEffect(
         React.useCallback(() => {
             refreshFavorites();

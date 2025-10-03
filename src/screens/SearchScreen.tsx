@@ -13,7 +13,6 @@ export default function SearchScreen({ navigation }: any) {
     const [q, setQ] = React.useState('');
     const [results, setResults] = React.useState([] as any[]);
 
-    // Refresh favorites when screen comes into focus
     useFocusEffect(
         React.useCallback(() => {
             refreshFavorites();

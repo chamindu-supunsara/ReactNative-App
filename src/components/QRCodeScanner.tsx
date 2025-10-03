@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity, Text, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -69,9 +69,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onQRCodeScanned, onClose 
         }}
       />
       
-      {/* Overlay */}
       <View style={styles.overlay}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
             <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
@@ -80,7 +78,6 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onQRCodeScanned, onClose 
           <View style={styles.placeholder} />
         </View>
 
-        {/* Scanning Area */}
         <View style={styles.scanningArea}>
           <View style={styles.scanningFrame}>
             <View style={[styles.corner, styles.topLeft]} />
@@ -90,7 +87,6 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onQRCodeScanned, onClose 
           </View>
         </View>
 
-        {/* Instructions */}
         <View style={styles.instructionsContainer}>
           <Text style={styles.instructionsText}>
             Position the QR code within the frame to scan
