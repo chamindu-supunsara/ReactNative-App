@@ -4,6 +4,7 @@ import { Text, Chip, ProgressBar, MD3Colors } from 'react-native-paper';
 import { fetchEventsByCategory } from '../services/events';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import EventCard from '../components/EventCard';
+import BackgroundDecorations from '../components/BackgroundDecorations';
 import useFavorites from '../hooks/useFavorites';
 
 const categories = ['All', 'Music', 'Food', 'Sports'];
@@ -29,60 +30,62 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        <View style={styles.categoriesSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
-            {categories.map((cat) => (
-              <Chip
-                key={cat}
-                onPress={() => setActiveCat(cat)}
-                style={[
-                  styles.chip,
-                  activeCat === cat && styles.chipSelected
-                ]}
-                textStyle={[
-                  styles.chipText,
-                  activeCat === cat && styles.chipTextSelected
-                ]}
-              >
-                {cat}
-              </Chip>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.eventsSection}>
-          <Text style={styles.sectionTitle}>
-            <Text style={styles.sectionTitleBold}>Popular</Text>
-            <Text style={styles.sectionTitleNormal}> {activeCat === 'All' ? 'Events' : activeCat + ' Events'}</Text>
-          </Text>
-        </View>
-
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ProgressBar progress={0.5} color={MD3Colors.primary70} />
-            <Text style={styles.loadingText}>Loading {activeCat.toLowerCase()} events...</Text>
+      <BackgroundDecorations>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.categoriesSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+              {categories.map((cat) => (
+                <Chip
+                  key={cat}
+                  onPress={() => setActiveCat(cat)}
+                  style={[
+                    styles.chip,
+                    activeCat === cat && styles.chipSelected
+                  ]}
+                  textStyle={[
+                    styles.chipText,
+                    activeCat === cat && styles.chipTextSelected
+                  ]}
+                >
+                  {cat}
+                </Chip>
+              ))}
+            </ScrollView>
           </View>
-        ) : filteredPopular.length > 0 ? (
-          filteredPopular.map(item => (
-            <EventCard
-              key={item.id}
-              item={item}
-              onPress={() => navigation.navigate('EventDetails', { item })}
-              onToggleFav={() => toggleFavorite(item)}
-              isFav={favorites.some((fav: any) => fav.id === item.id)}
-            />
-          ))
-        ) : (
-          <View style={styles.noEventsContainer}>
-            <Text style={styles.noEventsIcon}>📅</Text>
-            <Text style={styles.noEventsText}>No {activeCat.toLowerCase()} events found</Text>
-            <Text style={styles.noEventsSubtext}>Check back later for new events!</Text>
-          </View>
-        )}
 
-      </ScrollView>
+          <View style={styles.eventsSection}>
+            <Text style={styles.sectionTitle}>
+              <Text style={styles.sectionTitleBold}>Popular</Text>
+              <Text style={styles.sectionTitleNormal}> {activeCat === 'All' ? 'Events' : activeCat + ' Events'}</Text>
+            </Text>
+          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ProgressBar progress={0.5} color={MD3Colors.primary70} />
+              <Text style={styles.loadingText}>Loading {activeCat.toLowerCase()} events...</Text>
+            </View>
+          ) : filteredPopular.length > 0 ? (
+            filteredPopular.map(item => (
+              <EventCard
+                key={item.id}
+                item={item}
+                onPress={() => navigation.navigate('EventDetails', { item })}
+                onToggleFav={() => toggleFavorite(item)}
+                isFav={favorites.some((fav: any) => fav.id === item.id)}
+              />
+            ))
+          ) : (
+            <View style={styles.noEventsContainer}>
+              <Text style={styles.noEventsIcon}>📅</Text>
+              <Text style={styles.noEventsText}>No {activeCat.toLowerCase()} events found</Text>
+              <Text style={styles.noEventsSubtext}>Check back later for new events!</Text>
+            </View>
+          )}
+
+        </ScrollView>
+      </BackgroundDecorations>
     </SafeAreaView>
   );
 }
@@ -90,7 +93,6 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   scrollContent: {
     padding: 15,
